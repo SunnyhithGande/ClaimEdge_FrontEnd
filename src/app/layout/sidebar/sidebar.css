@@ -1,0 +1,123 @@
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    padding: 16px;
+    background: linear-gradient(
+        180deg,
+        #071427,
+        #0b1b35
+    );
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 35px;
+}
+
+.sidebar-logo {
+    width: 34px;
+    height: 34px;
+    background: rgba(255,255,255,.15);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-brand {
+    color: white;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.sidebar-subtitle {
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.menu-title {
+    color: #64748b;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    margin-bottom: 15px;
+}
+
+.nav {
+    padding: 0;
+}
+
+.nav-item {
+    list-style: none;
+}
+
+.nav-link {
+    color: #e2e8f0 !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    transition: all .3s ease;
+    font-size: 14px;
+}
+
+.nav-link:hover:not(.active-link) {
+    background: rgba(255,255,255,.06);
+}
+
+.active-link {
+    background: #2563eb !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.parent-link {
+    justify-content: space-between;
+}
+
+.menu-left {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-left div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.submenu {
+    list-style: none;
+    padding-left: 16px;
+    margin-bottom: 8px;
+}
+
+.submenu-link {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.submenu-link.active-link {
+    background: rgba(37,99,235,.30) !important;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 10px;
+}

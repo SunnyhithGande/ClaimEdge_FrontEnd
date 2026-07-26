@@ -1,0 +1,150 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">Premium Payments & Settlement Schedules</h2>
+            <p class="text-muted mb-0">Process policy premium payments, manage payment schedules, and disburse claim settlements.</p>
+        </div>
+
+        <button routerLink="/payments/collect-premium" class="btn btn-primary font-weight-bold">
+            <i class="bi bi-plus-lg me-1"></i> Collect Premium
+        </button>
+    </div>
+
+    <!-- Alert Notification Banner -->
+    <div *ngIf="message" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close" (click)="message = ''"></button>
+    </div>
+
+    <!-- SECTION 1: DUE POLICY INVOICES & PAYMENT SCHEDULES -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 font-weight-bold text-dark">
+                <i class="bi bi-receipt-cutoff text-primary me-2"></i> Payment Schedules & Due Premium Invoices
+            </h5>
+            <span class="badge bg-warning text-dark px-3 py-2 fs-7 fw-bold">
+                {{ duePolicyInvoices.length }} Invoices Pending
+            </span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Policy ID</th>
+                            <th>Product Type</th>
+                            <th>Policyholder</th>
+                            <th>Due Amount</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Payment Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let inv of duePolicyInvoices">
+                            <td><strong class="text-primary">#{{ inv.policyId }}</strong></td>
+                            <td><div class="fw-bold text-dark">{{ inv.productType }}</div></td>
+                            <td><span class="badge bg-light text-dark border">Holder #{{ inv.policyHolderId }}</span></td>
+                            <td><strong class="text-success fs-6">₹{{ inv.premium | number }}</strong></td>
+                            <td>
+                                <select class="form-select form-select-sm border-secondary fw-semibold" #methodSelect style="max-width: 160px;">
+                                    <option value="Card">Card</option>
+                                    <option value="BankTransfer">Bank Transfer</option>
+                                    <option value="Cheque">Cheque</option>
+                                </select>
+                            </td>
+                            <td>
+                                <span class="badge" [ngClass]="{'bg-info text-white': inv.status === 'Approved - Pending Payment', 'bg-warning text-dark': inv.status !== 'Active' && inv.status !== 'Approved - Pending Payment', 'bg-success': inv.status === 'Active'}">
+                                    {{ inv.status }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-success font-weight-bold px-3 shadow-sm" *ngIf="inv.status !== 'Active'" (click)="processSchedulePayment(inv, methodSelect.value)">
+                                    <i class="bi bi-credit-card-fill me-1"></i> Pay Premium (₹{{ inv.premium | number }})
+                                </button>
+                                <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fw-bold" *ngIf="inv.status === 'Active'">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Payment RECEIVED
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="duePolicyInvoices.length === 0">
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-check2-all fs-2 text-success d-block mb-2"></i>
+                                No pending payment invoices found. All policy premium payments are up to date!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: PAYMENT TRANSACTION HISTORY LEDGER -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <h5 class="mb-0 font-weight-bold text-dark">
+                    <i class="bi bi-card-checklist text-secondary me-2"></i> Premium Transaction Ledger History
+                </h5>
+
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="Search Payment ID, Policy ID..." [(ngModel)]="searchText" (input)="filterPayments()" style="width: 220px;">
+                    <select class="form-select form-select-sm" [(ngModel)]="selectedStatus" (change)="filterPayments()" style="width: 140px;">
+                        <option value="">All Status</option>
+                        <option value="RECEIVED">RECEIVED</option>
+                        <option value="PENDING">PENDING</option>
+                        <option value="OVERDUE">OVERDUE</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Policy ID</th>
+                            <th>Product Type</th>
+                            <th>Amount</th>
+                            <th>Payment Date</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr *ngFor="let payment of filteredPayments">
+                            <td><strong>#{{ payment.paymentId }}</strong></td>
+                            <td>Policy #{{ payment.policyId }}</td>
+                            <td>{{ payment.productType }}</td>
+                            <td><strong class="text-dark">₹{{ payment.amount | number }}</strong></td>
+                            <td>{{ payment.paymentDate }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ payment.method }}</span></td>
+                            <td>
+                                <span class="badge" [ngClass]="{'bg-success': payment.status === 'RECEIVED', 'bg-warning text-dark': payment.status === 'PENDING', 'bg-danger': payment.status === 'OVERDUE'}">
+                                    {{ payment.status }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-3">
+                                <button class="btn btn-sm btn-outline-primary" (click)="viewPayment(payment.paymentId)" title="View Details">
+                                    <i class="bi bi-eye"></i> Details
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="filteredPayments.length === 0">
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                No payment transaction logs found matching search.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

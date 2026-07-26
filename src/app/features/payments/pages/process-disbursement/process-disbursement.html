@@ -1,0 +1,131 @@
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+
+        <h2>Process Disbursement</h2>
+
+        <p class="text-muted">
+            Complete and process claim settlement payments.
+        </p>
+
+    </div>
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+
+            Process Payment
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+
+                        Disbursement ID
+
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="disbursementId">
+
+                </div>
+
+            </div>
+
+            <div class="mt-4">
+
+                <button
+                    class="btn btn-primary"
+                    (click)="processDisbursement()">
+
+                    Process Payment
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div
+        class="card"
+        *ngIf="processedData">
+
+        <div class="card-header">
+
+            Processing Result
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <strong>
+                            Disbursement ID:
+                        </strong>
+
+                        {{ processedData.disbursementId }}
+
+                    </p>
+
+                    <p>
+
+                        <strong>
+                            Claim ID:
+                        </strong>
+
+                        {{ processedData.claimId }}
+
+                    </p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <p>
+
+                        <strong>
+                            Amount:
+                        </strong>
+
+                        ₹{{ processedData.amount }}
+
+                    </p>
+
+                    <p>
+
+                        <strong>
+                            Status:
+                        </strong>
+
+                        <span
+                            class="status-badge">
+
+                            {{ processedData.status }}
+
+                        </span>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

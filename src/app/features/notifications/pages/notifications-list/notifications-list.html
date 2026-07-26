@@ -1,0 +1,112 @@
+<div class="container-fluid py-4">
+
+    <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">Notifications Center</h2>
+            <p class="text-muted mb-0">Track real-time system alerts, policy changes, underwriter decisions, and payment status updates.</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- DELETE ALL BUTTON -->
+            <button class="btn btn-outline-danger font-weight-bold" *ngIf="notifications.length > 0" (click)="deleteAll()">
+                <i class="bi bi-trash3-fill me-1"></i> Delete All
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Notification Toast -->
+    <div *ngIf="message" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close" (click)="message = ''"></button>
+    </div>
+
+    <!-- FILTERS BAR: DATE FILTER & CATEGORY FILTER -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+                <div class="col-md-4">
+                    <label class="form-label font-weight-bold fs-7 mb-1">Filter by Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" [(ngModel)]="filterDate" (change)="applyFilters()">
+                        <button class="btn btn-outline-secondary" *ngIf="filterDate" (click)="clearDateFilter()" title="Clear Date Filter">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label font-weight-bold fs-7 mb-1">Filter by Category</label>
+                    <select class="form-select" [(ngModel)]="selectedCategory" (change)="applyFilters()">
+                        <option value="">All Categories</option>
+                        <option value="Policy">Policy</option>
+                        <option value="Payment">Payment</option>
+                        <option value="Claim">Claim</option>
+                        <option value="Underwriting">Underwriting</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 text-md-end mt-md-4">
+                    <span class="badge bg-primary px-3 py-2 fs-7 fw-bold">
+                        {{ filteredNotifications.length }} Notifications Found
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION CARDS LIST (SORTED LATEST FIRST) -->
+    <div class="row g-3">
+        <div class="col-12" *ngFor="let n of filteredNotifications">
+            <div class="card border-0 shadow-sm rounded-4 p-3 notification-card position-relative" [class.border-unread]="n.status === 'UNREAD'">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-avatar rounded-circle text-white p-3 d-flex align-items-center justify-content-center"
+                            [ngClass]="{
+                                'bg-primary': n.category === 'Policy',
+                                'bg-success': n.category === 'Payment',
+                                'bg-warning text-dark': n.category === 'Underwriting',
+                                'bg-info': n.category === 'Claim'
+                            }" style="width: 48px; height: 48px;">
+                            <i class="bi" [ngClass]="{
+                                'bi-shield-check': n.category === 'Policy',
+                                'bi-credit-card-fill': n.category === 'Payment',
+                                'bi-person-workspace': n.category === 'Underwriting',
+                                'bi-file-earmark-medical-fill': n.category === 'Claim'
+                            } + ' fs-5'"></i>
+                        </div>
+
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-light text-dark border fw-bold">{{ n.category }}</span>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i> {{ n.createdDate | date:'medium' }}
+                                </small>
+                                <span class="badge bg-warning text-dark" *ngIf="n.status === 'UNREAD'">NEW</span>
+                            </div>
+                            <p class="mb-0 text-dark fw-semibold fs-6">{{ n.message }}</p>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS: MARK READ & DISMISS (DELETE) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" *ngIf="n.status === 'UNREAD'" (click)="markRead(n.notificationId!)" title="Mark as Read">
+                            <i class="bi bi-check2"></i> Read
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="dismiss(n.notificationId!)" title="Dismiss / Delete Notification">
+                            <i class="bi bi-x-lg me-1"></i> Dismiss
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" *ngIf="filteredNotifications.length === 0">
+            <div class="card shadow-sm border-0 rounded-4 text-center py-5 text-muted">
+                <i class="bi bi-bell-slash fs-1 d-block mb-3 text-secondary"></i>
+                <h5 class="fw-bold">No Notifications Found</h5>
+                <p class="mb-0 fs-7">You currently have no notification alerts for the selected criteria.</p>
+            </div>
+        </div>
+    </div>
+</div>

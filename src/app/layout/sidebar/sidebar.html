@@ -1,0 +1,254 @@
+<div class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-header mb-3">
+        <div class="sidebar-logo">
+            CE
+        </div>
+        <div>
+            <div class="sidebar-brand">
+                ClaimEdge
+            </div>
+            <div class="sidebar-subtitle">
+                Insurance Suite
+            </div>
+        </div>
+    </div>
+
+    <div class="menu-title">
+        MAIN NAVIGATION
+    </div>
+
+    <ul class="nav flex-column">
+
+        <!-- Policyholder Navigation Menu -->
+        <ng-container *ngIf="hasRole('POLICYHOLDER') && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-house-door"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies'" (click)="navigate($event, '/policies')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-file-earmark-text"></i> <span>My Policies</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/list'" (click)="navigate($event, '/claims/list')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-clipboard-data"></i> <span>My Claims</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/timeline'" (click)="navigate($event, '/claims/timeline')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-clock-history"></i> <span>Claim Status</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/payments/premium-payments'" (click)="navigate($event, '/payments/premium-payments')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-credit-card"></i> <span>Payments</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Policy Administrator Navigation Menu -->
+        <ng-container *ngIf="hasRole('POLICY_ADMIN') && !hasRole('ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-house-door"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies'" (click)="navigate($event, '/policies')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-shield-lock"></i> <span>Policy Administration</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies/endorsements'" (click)="navigate($event, '/policies/endorsements')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-text"></i> <span>Policy Endorsements</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Underwriter Navigation Menu -->
+        <ng-container *ngIf="hasRole('UNDERWRITER') && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-house-door"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/underwriting'" (click)="navigate($event, '/underwriting')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-file-earmark-check"></i> <span>Applications</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies'" (click)="navigate($event, '/policies')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-check2-circle"></i> <span>Policy Directory</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/analytics'" (click)="navigate($event, '/analytics')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i> <span>Analytics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Claims Adjuster Navigation Menu -->
+        <ng-container *ngIf="hasRole('ADJUSTER') && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-house-door"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/list'" (click)="navigate($event, '/claims/list')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-clipboard-check"></i> <span>Assigned Claims</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/assessments'" (click)="navigate($event, '/claims/assessments')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-check"></i> <span>Claim Assessment</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/payments/disbursements'" (click)="navigate($event, '/payments/disbursements')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-cash-stack"></i> <span>Payout Recommendations</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Operations Analyst Navigation Menu -->
+        <ng-container *ngIf="(hasRole('OPERATIONS') || hasRole('OPERATIONS_ANALYST') || hasRole('OPS')) && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/analytics'" (click)="navigate($event, '/analytics')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i> <span>Analytics & Reporting</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-speedometer2"></i> <span>Operations Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/list'" (click)="navigate($event, '/claims/list')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-diagram-3"></i> <span>Claim Pipeline</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Compliance Analyst Navigation Menu -->
+        <ng-container *ngIf="(hasRole('COMPLIANCE') || hasRole('FRAUD_ANALYST')) && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/compliance'" (click)="navigate($event, '/compliance')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-check"></i> <span>Compliance Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/fraud-detection'" (click)="navigate($event, '/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-shield-exclamation"></i> <span>Fraud Detection</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/identity-management'" (click)="navigate($event, '/identity-management')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-list-task"></i> <span>Audit Logs</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+        <!-- Insurance Admin Navigation Menu (Full Access) -->
+        <ng-container *ngIf="hasRole('ADMIN')">
+            <li class="nav-item">
+                <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-house-door"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/identity-management'" (click)="navigate($event, '/identity-management')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-people"></i> <span>Identity & Users</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies'" (click)="navigate($event, '/policies')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-file-earmark-text"></i> <span>Policy Administration</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/policies/endorsements'" (click)="navigate($event, '/policies/endorsements')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-text"></i> <span>Policy Endorsements</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/underwriting'" (click)="navigate($event, '/underwriting')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-file-earmark-check"></i> <span>Underwriting</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/list'" (click)="navigate($event, '/claims/list')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-clipboard-data"></i> <span>Claims</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/claims/assessments'" (click)="navigate($event, '/claims/assessments')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-check"></i> <span>Claim Assessment</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/payments/premium-payments'" (click)="navigate($event, '/payments/premium-payments')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-credit-card"></i> <span>Payments</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/fraud-detection'" (click)="navigate($event, '/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-shield-exclamation"></i> <span>Fraud Detection</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/compliance'" (click)="navigate($event, '/compliance')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-check"></i> <span>Compliance & Audit</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/analytics'" (click)="navigate($event, '/analytics')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i> <span>Analytics</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+        </ng-container>
+
+    </ul>
+
+</div>

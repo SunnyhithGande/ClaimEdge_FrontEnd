@@ -1,0 +1,144 @@
+<div
+    class="container-fluid py-4"
+    *ngIf="claim">
+
+    <div class="page-header">
+
+        <h2>
+            Claim Details
+        </h2>
+
+        <p class="text-muted">
+            View and manage claim information.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+
+            Claim Information
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <div class="detail-item">
+                        <label>Claim ID</label>
+                        <span>{{ claim.claimId }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Policy ID</label>
+                        <span>{{ claim.policyId }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Claim Type</label>
+                        <span>{{ claim.claimType }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Claim Amount</label>
+                        <span>
+                            ₹{{ claim.claimAmount }}
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <div class="detail-item">
+                        <label>Incident Date</label>
+                        <span>
+                            {{ claim.incidentDate }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Submission Date</label>
+                        <span>
+                            {{ claim.submissionDate }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Status</label>
+
+                        <span
+                            class="status-badge">
+
+                            {{ claim.status }}
+
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Assigned Adjuster</label>
+                        <span>
+                            {{ claim.assignedAdjusterId || 'Not Assigned' }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div>
+
+                <h6>
+                    Reason
+                </h6>
+
+                <p class="reason-text">
+
+                    {{ claim.reason }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="action-buttons">
+
+        <button
+            class="btn btn-warning"
+            (click)="addAssessment()">
+
+            <i class="bi bi-ui-checks"></i>
+            Add Assessment
+
+        </button>
+
+        <button
+            class="btn btn-success"
+            (click)="approveClaim()">
+
+            <i class="bi bi-check-circle"></i>
+            Approve Claim
+
+        </button>
+
+        <button
+            class="btn btn-danger"
+            (click)="rejectClaim()">
+
+            <i class="bi bi-x-circle"></i>
+            Reject Claim
+
+        </button>
+
+    </div>
+
+</div>

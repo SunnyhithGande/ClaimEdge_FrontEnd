@@ -1,0 +1,10 @@
+export interface Policy {
+  policyId?: number;
+  policyHolderId: number;
+  productType: string;
+  coverageAmount: number;
+  premium: number;
+  startDate: string;
+  endDate: string;
+  status?: string;
+}

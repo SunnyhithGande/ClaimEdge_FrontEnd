@@ -1,0 +1,17 @@
+.fs-7 {
+  font-size: 0.875rem;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .modal-content, .modal-content * {
+    visibility: visible;
+  }
+  .modal-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}

@@ -1,0 +1,122 @@
+<div class="container-fluid py-4">
+    <div class="page-header mb-4">
+        <h2>Claim Status & Lifecycle Tracker</h2>
+        <p class="text-muted">Track submitted claims through their real-time lifecycle status flowchart.</p>
+    </div>
+
+    <!-- Search Claim Input Card -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-0 font-weight-bold text-dark">Search Claim Lifecycle</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row align-items-end g-3">
+                <div class="col-md-6">
+                    <label class="form-label font-weight-bold">Claim ID</label>
+                    <input type="number" class="form-control" placeholder="Enter Claim ID (e.g. 1, 2, 3...)" [(ngModel)]="claimId">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100 py-2 font-weight-bold" (click)="loadTimeline()">
+                        <i class="bi bi-diagram-3 me-1"></i> Track Claim Lifecycle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Alert for Non-Existent Claim IDs -->
+    <div *ngIf="errorMessage" class="alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+        <span>{{ errorMessage }}</span>
+        <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+    </div>
+
+    <!-- VISUAL FLOWCHART DIAGRAM SECTION -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4" *ngIf="claimDetails && !errorMessage">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 font-weight-bold text-dark">
+                <i class="bi bi-diagram-3-fill text-primary me-2"></i> Real-Time Lifecycle Flowchart for Claim #{{ claimDetails.claimId }}
+            </h5>
+            <span class="badge bg-success-subtle text-success fs-7 fw-bold border border-success">
+                Status: {{ claimDetails.status }}
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- Flowchart Container Grid with Arrow Connectors -->
+            <div class="flowchart-container py-3">
+                <div class="row g-3 align-items-center justify-content-center">
+
+                    <ng-container *ngFor="let step of flowchartSteps; let i = index">
+
+                        <!-- Flowchart Box Node -->
+                        <div class="col-lg-2 col-md-3 col-sm-6">
+                            <div class="flowchart-node card text-center p-3 rounded-4 shadow-sm h-100 border-2"
+                                 [class.node-completed]="isStageCompleted(step.id) && !isStageActive(step.id)"
+                                 [class.node-active]="isStageActive(step.id)"
+                                 [class.node-pending]="!isStageCompleted(step.id)"
+                                 [class.node-rejected]="step.id === 'APPROVED' && claimDetails.status === 'REJECTED'">
+
+                                <div class="node-header mb-2 d-flex justify-content-between align-items-center">
+                                    <span class="badge node-step-badge">Step {{ step.stepNumber }}</span>
+                                    <i class="bi bi-check-circle-fill text-success fs-5" *ngIf="isStageCompleted(step.id) && step.statusText !== 'REJECTED'"></i>
+                                    <i class="bi bi-x-circle-fill text-danger fs-5" *ngIf="step.statusText === 'REJECTED'"></i>
+                                </div>
+
+                                <div class="node-icon-wrapper my-2">
+                                    <i class="bi {{ step.icon }} node-icon"></i>
+                                </div>
+
+                                <h6 class="fw-bold mb-1 fs-7 text-dark">{{ step.title }}</h6>
+                                <p class="text-muted fs-8 mb-2">{{ step.subtitle }}</p>
+
+                                <span class="badge node-status-pill mt-auto"
+                                      [class.bg-success]="isStageCompleted(step.id) && step.statusText !== 'REJECTED'"
+                                      [class.bg-danger]="step.statusText === 'REJECTED'"
+                                      [class.bg-secondary]="!isStageCompleted(step.id)">
+                                    {{ step.statusText }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Connector Arrow between nodes -->
+                        <div class="col-auto text-center d-none d-md-block" *ngIf="i < flowchartSteps.length - 1">
+                            <div class="flowchart-arrow" [class.arrow-active]="isStageCompleted(flowchartSteps[i+1].id)">
+                                <i class="bi bi-arrow-right fs-3"></i>
+                            </div>
+                        </div>
+
+                    </ng-container>
+
+                </div>
+            </div>
+
+            <!-- Inspected Claim Summary Banner -->
+            <div class="p-3 bg-light rounded-3 border mt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3"><strong>Policy ID:</strong> Policy #{{ claimDetails.policyId }}</div>
+                    <div class="col-md-3"><strong>Claim Type:</strong> {{ claimDetails.claimType }}</div>
+                    <div class="col-md-3"><strong>Claim Amount:</strong> ₹{{ claimDetails.claimAmount | number }}</div>
+                    <div class="col-md-3">
+                        <strong>Current Status:</strong>
+                        <span class="badge bg-primary ms-1">{{ claimDetails.status }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Activity History -->
+    <div class="card shadow-sm border-0 rounded-4" *ngIf="timeline.length > 0 && !errorMessage">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-0 font-weight-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i> Audit Timeline Logs</h5>
+        </div>
+        <div class="card-body p-4">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item py-3" *ngFor="let event of timeline">
+                    <i class="bi bi-check2-circle me-2 text-success"></i> {{ event }}
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

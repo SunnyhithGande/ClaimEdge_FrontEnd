@@ -1,0 +1,92 @@
+.flowchart-container {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 24px 16px;
+  border: 1px border #e2e8f0;
+}
+
+.flowchart-node {
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+/* Completed Node State (Green Theme) */
+.node-completed {
+  border-color: #22c55e !important;
+  background: #f0fdf4 !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15) !important;
+}
+
+.node-completed .node-icon {
+  color: #16a34a;
+  font-size: 1.8rem;
+}
+
+.node-completed .node-step-badge {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Active Node State (Blue Theme with Pulse) */
+.node-active {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25) !important;
+}
+
+.node-active .node-icon {
+  color: #2563eb;
+  font-size: 2rem;
+}
+
+.node-active .node-step-badge {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Pending Node State */
+.node-pending {
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  opacity: 0.7;
+}
+
+.node-pending .node-icon {
+  color: #94a3b8;
+  font-size: 1.6rem;
+}
+
+.node-pending .node-step-badge {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Rejected Node State */
+.node-rejected {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.node-rejected .node-icon {
+  color: #dc2626;
+}
+
+/* Arrow Connectors */
+.flowchart-arrow {
+  color: #cbd5e1;
+  transition: color 0.3s ease;
+}
+
+.flowchart-arrow.arrow-active {
+  color: #16a34a;
+  font-weight: bold;
+}
+
+.fs-7 {
+  font-size: 0.875rem;
+}
+
+.fs-8 {
+  font-size: 0.775rem;
+}

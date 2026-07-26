@@ -1,0 +1,388 @@
+<div class="container-fluid py-4">
+
+    <!-- ============================================================ -->
+    <!-- POLICYHOLDER DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'POLICYHOLDER'">
+        <div class="alert alert-primary shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Welcome to Policyholder Portal, {{ userName }}!</h4>
+                <p class="mb-0 text-muted">Track your policies, file claims, check claim status, and make premium payments.</p>
+            </div>
+            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">Policyholder</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">MY POLICIES</small>
+                        <h3 class="fw-bold text-primary mt-2">Active</h3>
+                        <a routerLink="/policies" class="text-decoration-none fs-8 fw-bold">View My Policies →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">SUBMITTED CLAIMS</small>
+                        <h3 class="fw-bold text-success mt-2">In Progress</h3>
+                        <a routerLink="/claims/list" class="text-decoration-none fs-8 fw-bold">Track Claim Status →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">PREMIUM PAYMENTS</small>
+                        <h3 class="fw-bold text-dark mt-2">Up to Date</h3>
+                        <a routerLink="/payments/premium-payments" class="text-decoration-none fs-8 fw-bold">Payment History →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">NOTIFICATIONS</small>
+                        <h3 class="fw-bold text-warning mt-2">Alerts Center</h3>
+                        <a routerLink="/notifications" class="text-decoration-none fs-8 fw-bold">View Notifications →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Policyholder Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-lg w-100 py-3 text-start shadow-sm" routerLink="/claims/create">
+                            <i class="bi bi-plus-circle me-2 fs-5"></i> File New Insurance Claim
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-primary btn-lg w-100 py-3 text-start shadow-sm" routerLink="/policies">
+                            <i class="bi bi-shield-check me-2 fs-5"></i> View Insurance Policies
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-success btn-lg w-100 py-3 text-start shadow-sm" routerLink="/payments/collect-premium">
+                            <i class="bi bi-credit-card me-2 fs-5"></i> Pay Insurance Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- POLICY ADMINISTRATOR DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'POLICY_ADMIN'">
+        <div class="alert alert-primary shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Policy Administration Portal, {{ userName }}</h4>
+                <p class="mb-0 text-muted">Create, amend, renew, and cancel insurance policies and manage policy endorsements.</p>
+            </div>
+            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">Policy Administrator</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">POLICY WORKBENCH</small>
+                        <h3 class="fw-bold text-primary mt-2">Policy Administration</h3>
+                        <p class="fs-8 text-muted mb-2">Create, amend, renew, or cancel active policy contracts.</p>
+                        <a routerLink="/policies" class="btn btn-sm btn-primary fw-bold">Open Policy Administration →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">POLICY ENDORSEMENTS</small>
+                        <h3 class="fw-bold text-success mt-2">Endorsements Queue</h3>
+                        <p class="fs-8 text-muted mb-2">Process coverage modifications, address changes, and policy riders.</p>
+                        <a routerLink="/policies/endorsements" class="btn btn-sm btn-success fw-bold">Manage Policy Endorsements →</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">NOTIFICATIONS & ALERTS</small>
+                        <h3 class="fw-bold text-warning mt-2">System Alerts</h3>
+                        <p class="fs-8 text-muted mb-2">Receive operational and policy change notifications.</p>
+                        <a routerLink="/notifications" class="btn btn-sm btn-warning text-dark fw-bold">View Notifications →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold">Policy Administration Key Features (4.2 Module)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-primary"><i class="bi bi-shield-plus me-1"></i> Issue New Policy</h6>
+                            <small class="text-muted d-block mb-2">Issue Life, Health, Motor, or Property policies with coverage & premiums.</small>
+                            <a routerLink="/policies" class="btn btn-sm btn-outline-primary w-100 fw-bold">Create Policy</a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-success"><i class="bi bi-pencil-square me-1"></i> Amend Coverage</h6>
+                            <small class="text-muted d-block mb-2">Modify policy coverage limits, insured details, and premium rates.</small>
+                            <a routerLink="/policies" class="btn btn-sm btn-outline-success w-100 fw-bold">Amend Policy</a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-warning"><i class="bi bi-arrow-repeat me-1"></i> Policy Renewal</h6>
+                            <small class="text-muted d-block mb-2">Extend validity dates for 1 year and transition status from Lapsed to Active.</small>
+                            <a routerLink="/policies" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">Renew Policy</a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-danger"><i class="bi bi-file-earmark-diff me-1"></i> Policy Endorsement</h6>
+                            <small class="text-muted d-block mb-2">Record beneficiary updates, vehicle swaps, rider additions, and address changes.</small>
+                            <a routerLink="/policies/endorsements" class="btn btn-sm btn-outline-danger w-100 fw-bold">Endorsements</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- UNDERWRITER DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'UNDERWRITER'">
+        <div class="alert alert-info shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Underwriting Workbench, {{ userName }}</h4>
+                <p class="mb-0 text-muted">Review underwriting applications, evaluate risk scores, and approve/decline policy applications.</p>
+            </div>
+            <span class="badge bg-info text-dark fs-6 px-3 py-2 rounded-pill">Underwriter</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">PENDING APPLICATIONS</small>
+                        <h2 class="fw-bold text-primary mt-2">Applications Queue</h2>
+                        <a routerLink="/underwriting" class="btn btn-sm btn-primary mt-2">Open Underwriting Workbench</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">RISK SCORING</small>
+                        <h2 class="fw-bold text-warning mt-2">Risk Calculator</h2>
+                        <a routerLink="/underwriting" class="btn btn-sm btn-outline-warning mt-2">Evaluate Risk Factors</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">POLICY APPROVALS</small>
+                        <h2 class="fw-bold text-success mt-2">Policy Directory</h2>
+                        <a routerLink="/policies" class="btn btn-sm btn-outline-success mt-2">View Policies</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- CLAIMS ADJUSTER DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'ADJUSTER'">
+        <div class="alert alert-warning shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Claims Adjuster Console, {{ userName }}</h4>
+                <p class="mb-0 text-dark">Assess assigned claim incidents, validate documentation, recommend payout amounts, and settle claims.</p>
+            </div>
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill">Claims Adjuster</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">ASSIGNED CLAIMS</small>
+                        <h3 class="fw-bold text-dark mt-2">Claims Directory</h3>
+                        <a routerLink="/claims/list" class="btn btn-sm btn-primary mt-2">Process Claims</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">CLAIM ASSESSMENTS</small>
+                        <h3 class="fw-bold text-primary mt-2">Assessment Form</h3>
+                        <a routerLink="/claims/assessments" class="btn btn-sm btn-outline-primary mt-2">Perform Assessment</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">DISBURSEMENTS & PAYOUTS</small>
+                        <h3 class="fw-bold text-success mt-2">Payout Queue</h3>
+                        <a routerLink="/payments/disbursements" class="btn btn-sm btn-success mt-2">Recommend Payout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- OPERATIONS ANALYST DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'OPERATIONS' || userRole === 'OPS'">
+        <div class="alert alert-dark shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold text-white">Operations & Pipeline Dashboard, {{ userName }}</h4>
+                <p class="mb-0 text-light">Monitor claims pipeline throughput, track SLA compliance, and handle operational exceptions.</p>
+            </div>
+            <span class="badge bg-secondary fs-6 px-3 py-2 rounded-pill">Operations</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">CLAIM PIPELINE</small>
+                        <h3 class="fw-bold text-primary mt-2">Processing Flow</h3>
+                        <a routerLink="/claims/list" class="btn btn-sm btn-primary mt-2">View Pipeline</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">SLA MONITORING</small>
+                        <h3 class="fw-bold text-info mt-2">Turnaround Time</h3>
+                        <a routerLink="/analytics" class="btn btn-sm btn-info text-white mt-2">SLA Metrics</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">EXCEPTIONS</small>
+                        <h3 class="fw-bold text-danger mt-2">Exception Review</h3>
+                        <a routerLink="/fraud-detection" class="btn btn-sm btn-outline-danger mt-2">Review Exceptions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- COMPLIANCE ANALYST DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'COMPLIANCE' || userRole === 'FRAUD_ANALYST'">
+        <div class="alert alert-secondary shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Compliance & Audit Console, {{ userName }}</h4>
+                <p class="mb-0 text-muted">Investigate suspicious fraud flags, generate regulatory reports, and inspect audit logs.</p>
+            </div>
+            <span class="badge bg-dark fs-6 px-3 py-2 rounded-pill">Compliance</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">FRAUD DETECTION</small>
+                        <h3 class="fw-bold text-danger mt-2">Suspicious Flags</h3>
+                        <a routerLink="/fraud-detection" class="btn btn-sm btn-danger mt-2">Investigate Flags</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">REGULATORY REPORTS</small>
+                        <h3 class="fw-bold text-primary mt-2">Compliance Audit</h3>
+                        <a routerLink="/compliance" class="btn btn-sm btn-primary mt-2">Generate Reports</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">SYSTEM AUDIT LOGS</small>
+                        <h3 class="fw-bold text-secondary mt-2">Access Logs</h3>
+                        <a routerLink="/identity-management" class="btn btn-sm btn-secondary mt-2">Inspect Audit Logs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ============================================================ -->
+    <!-- INSURANCE ADMIN DASHBOARD VIEW -->
+    <!-- ============================================================ -->
+    <ng-container *ngIf="userRole === 'ADMIN'">
+        <div class="alert alert-primary shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="alert-heading mb-1 fw-bold">Enterprise Administrator Console</h4>
+                <p class="mb-0 text-muted">Full administrative management across users, policies, claims, underwriting, fraud, and compliance.</p>
+            </div>
+            <span class="badge bg-dark fs-6 px-3 py-2 rounded-pill">Administrator</span>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">USER & RBAC</small>
+                        <h3 class="fw-bold text-primary mt-2">Identity</h3>
+                        <a routerLink="/identity-management" class="btn btn-sm btn-outline-primary mt-1">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">POLICIES</small>
+                        <h3 class="fw-bold text-success mt-2">Administration</h3>
+                        <a routerLink="/policies" class="btn btn-sm btn-outline-success mt-1">Policy Admin</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">CLAIMS CONSOLE</small>
+                        <h3 class="fw-bold text-dark mt-2">Claims</h3>
+                        <a routerLink="/claims/list" class="btn btn-sm btn-outline-dark mt-1">Claims Console</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-3">
+                    <div class="card-body">
+                        <small class="text-muted fw-bold">ANALYTICS</small>
+                        <h3 class="fw-bold text-info mt-2">Reports</h3>
+                        <a routerLink="/analytics" class="btn btn-sm btn-outline-info mt-1">Executive Reports</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+</div>

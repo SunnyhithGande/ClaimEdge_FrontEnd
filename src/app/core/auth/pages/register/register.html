@@ -1,0 +1,67 @@
+<div class="register-page">
+    <div class="register-card">
+        <div class="text-center mb-4">
+            <h2>Create Account</h2>
+            <p class="text-muted">Register for ClaimEdge Policyholder Portal</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="register()">
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Full Name</label>
+                <input type="text" class="form-control" formControlName="name" placeholder="John Doe">
+                <small class="text-danger" *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.invalid">
+                    Full Name is required
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Email Address</label>
+                <input type="email" class="form-control" formControlName="email" placeholder="name@company.com">
+                <small class="text-danger" *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.invalid">
+                    Enter a valid email address
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Password</label>
+                <input type="password" class="form-control" formControlName="password" placeholder="••••••••">
+                <small class="text-danger" *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.invalid">
+                    Password must contain at least 6 characters
+                </small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label font-weight-bold">Phone Number</label>
+                <input type="text" class="form-control" formControlName="phone" placeholder="+1-555-0199">
+                <small class="text-danger" *ngIf="registerForm.get('phone')?.touched && registerForm.get('phone')?.invalid">
+                    Phone number is required
+                </small>
+            </div>
+
+            <div *ngIf="successMessage" class="alert alert-success mt-3 py-2 fs-7">
+                {{ successMessage }}
+            </div>
+
+            <div *ngIf="errorMessage" class="alert alert-danger mt-3 py-2 fs-7">
+                {{ errorMessage }}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 font-weight-bold mt-2" [disabled]="loading">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Register Policyholder Account
+            </button>
+
+            <div *ngIf="registrationCompleted" class="mt-3">
+                <a routerLink="/login" class="btn btn-success w-100 font-weight-bold">
+                    Go To Login Page
+                </a>
+            </div>
+
+            <div class="text-center mt-3">
+                <a routerLink="/login" class="text-decoration-none">
+                    Already registered? Proceed to Login
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

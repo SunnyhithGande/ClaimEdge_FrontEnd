@@ -1,0 +1,145 @@
+<div
+    class="container-fluid py-4"
+    *ngIf="payment">
+
+    <div class="page-header">
+
+        <h2>Payment Details</h2>
+
+        <p class="text-muted">
+            View payment information and transaction history.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <div
+            class="card-header d-flex justify-content-between align-items-center">
+
+            <span>
+                Payment Information
+            </span>
+
+            <button
+                class="btn btn-danger btn-sm"
+                (click)="markOverdue()">
+
+                Mark Overdue
+
+            </button>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <!-- Left Side -->
+
+                <div class="col-lg-7">
+
+                    <div class="info-row">
+
+                        <strong>Payment ID:</strong>
+
+                        {{ payment.paymentId }}
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <strong>Policy ID:</strong>
+
+                        {{ payment.policyId }}
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <strong>Amount:</strong>
+
+                        ₹{{ payment.amount }}
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <strong>Payment Date:</strong>
+
+                        {{ payment.paymentDate }}
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <strong>Payment Method:</strong>
+
+                        {{ payment.paymentMethod }}
+
+                    </div>
+
+                    <div class="info-row">
+
+                        <strong>Status:</strong>
+
+                        <span
+                            class="status-badge"
+                            [ngClass]="{
+                              'paid': payment.status === 'PAID',
+                              'pending': payment.status === 'PENDING',
+                              'overdue': payment.status === 'OVERDUE'
+                            }">
+
+                            {{ payment.status }}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- Right Side -->
+
+                <div class="col-lg-5">
+
+                    <div class="history-card">
+
+                        <h5>
+                            Payment History
+                        </h5>
+
+                        <ul>
+
+                            <li>
+                                Premium Payment Created
+                            </li>
+
+                            <li>
+                                Payment Successfully Processed
+                            </li>
+
+                            <li>
+                                Receipt Generated
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                    <button
+                        class="btn btn-outline-primary mt-3">
+
+                        Download Receipt
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,91 @@
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+
+        <h2>Initiate Disbursement</h2>
+
+        <p class="text-muted">
+            Create a new claim disbursement.
+        </p>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+
+            Disbursement Information
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Claim ID
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="disbursementData.claimId">
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Amount
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="disbursementData.amount">
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Disbursement Date
+                    </label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        [(ngModel)]="disbursementData.disbursementDate">
+
+                </div>
+
+            </div>
+
+            <div class="button-group">
+
+                <button
+                    class="btn btn-secondary"
+                    type="button">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    type="button"
+                    (click)="initiateDisbursement()">
+
+                    Initiate Disbursement
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

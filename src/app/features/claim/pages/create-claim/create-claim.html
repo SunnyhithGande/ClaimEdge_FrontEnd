@@ -1,0 +1,104 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Submit Claim</h2>
+            <p class="text-muted">File a new insurance claim linked to an active policy.</p>
+        </div>
+        <a routerLink="/claims/list" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Claims
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-0 font-weight-bold text-dark">Claim Incident Information</h5>
+        </div>
+        <div class="card-body p-4">
+            <form (ngSubmit)="submitClaim()">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label font-weight-bold">Select Active Policy</label>
+                        <select class="form-select" [(ngModel)]="claimData.policyId" name="policyId" required>
+                            <option value="" disabled>Select Policy</option>
+                            <option *ngFor="let p of policies" [value]="p.policyId">
+                                Policy #{{ p.policyId }} - {{ p.productType }} (Coverage: ₹{{ p.coverageAmount | number }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label font-weight-bold">Claim Type</label>
+                        <select class="form-select" [(ngModel)]="claimData.claimType" name="claimType">
+                            <option value="Vehicle Damage">Vehicle Damage</option>
+                            <option value="Medical Hospitalization">Medical Hospitalization</option>
+                            <option value="Property Damage">Property Damage</option>
+                            <option value="Life Benefit">Life Benefit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label font-weight-bold">Incident Date</label>
+                        <input type="date" class="form-control" [(ngModel)]="claimData.incidentDate" name="incidentDate">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label font-weight-bold">Claim Amount (₹)</label>
+                        <input type="number" class="form-control" placeholder="e.g. 50000" [(ngModel)]="claimData.claimAmount" name="claimAmount" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label font-weight-bold">Incident Description & Reason</label>
+                    <textarea class="form-control" rows="3" placeholder="Describe the incident, damage, or medical details..." [(ngModel)]="claimData.reason" name="reason"></textarea>
+                </div>
+
+                <!-- Document Upload Section -->
+                <div class="card bg-light border-secondary-subtle rounded-3 p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-1"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i> Upload Supporting Documents & Evidence</h6>
+                            <small class="text-muted">Attach ID Proof, Repair Estimates, Damage Photos, or Bills for Adjuster Review (PDF, JPG, PNG).</small>
+                        </div>
+                        <label class="btn btn-primary btn-sm px-3 fw-bold cursor-pointer">
+                            <i class="bi bi-upload me-1"></i> Upload Document
+                            <input type="file" class="d-none" (change)="onFileSelected($event)" multiple accept=".pdf,.jpg,.jpeg,.png,.docx">
+                        </label>
+                    </div>
+
+                    <!-- Uploaded Documents List -->
+                    <div class="row g-2" *ngIf="uploadedDocuments.length > 0">
+                        <div class="col-md-6" *ngFor="let doc of uploadedDocuments; let i = index">
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-white rounded-3 border shadow-sm">
+                                <div class="d-flex align-items-center text-truncate me-2">
+                                    <i class="bi bi-file-earmark-text fs-4 text-primary me-3"></i>
+                                    <div class="text-truncate">
+                                        <div class="fw-bold text-dark text-truncate fs-7">{{ doc.name }}</div>
+                                        <small class="text-muted fs-8">{{ doc.size }} • {{ doc.date }}</small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm border-0" (click)="removeDocument(i)" title="Remove document">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div *ngIf="uploadedDocuments.length === 0" class="text-center py-3 border border-dashed rounded-3 bg-white text-muted">
+                        <i class="bi bi-cloud-arrow-up fs-2 d-block text-primary"></i>
+                        <span class="fs-7">Click <strong>Upload Document</strong> button above to attach evidence for the Claims Adjuster.</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a routerLink="/claims/list" class="btn btn-light px-4">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4 font-weight-bold" [disabled]="submitting">
+                        <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                        Submit Claim
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

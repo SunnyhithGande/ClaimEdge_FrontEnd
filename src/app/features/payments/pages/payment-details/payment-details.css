@@ -1,0 +1,95 @@
+.container-fluid {
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.page-header {
+    margin-bottom: 20px;
+}
+
+.page-header h2 {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.card {
+    border: none;
+    border-radius: 18px;
+    box-shadow:
+        0 4px 18px
+        rgba(15, 23, 42, .08);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+.info-row {
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.info-row strong {
+    color: #334155;
+    margin-right: 8px;
+}
+
+.history-card {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.history-card h5 {
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #0f172a;
+}
+
+.history-card ul {
+    padding-left: 18px;
+    margin-bottom: 0;
+}
+
+.history-card li {
+    margin-bottom: 10px;
+    color: #475569;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.paid {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.overdue {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn {
+    border-radius: 10px;
+}
+
+.btn-outline-primary {
+    padding: 10px 16px;
+}

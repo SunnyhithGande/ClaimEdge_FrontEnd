@@ -1,0 +1,160 @@
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Claim Inspection & Assessment Workbench</h2>
+            <p class="text-muted mb-0">Inspect submitted claims, review customer uploaded documents, and approve or reject claim payouts.</p>
+        </div>
+        <a routerLink="/claims/list" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Claims Directory
+        </a>
+    </div>
+
+    <!-- Alert Notification -->
+    <div *ngIf="message" class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-info-circle me-2"></i> {{ message }}
+    </div>
+
+    <!-- Inspection & Assessment Form Card -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="mb-0 font-weight-bold text-dark">
+                <i class="bi bi-clipboard-check text-primary me-2"></i> Perform Claim Assessment
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- Target Claim Selection -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label font-weight-bold">Select Submitted Claim to Inspect</label>
+                    <select class="form-select" [ngModel]="assessmentData.claimId" (ngModelChange)="onClaimSelect($event)">
+                        <option *ngFor="let c of submittedClaims" [value]="c.claimId">
+                            Claim #{{ c.claimId }} - Policy #{{ c.policyId }} ({{ c.claimType }}) - ₹{{ c.claimAmount | number }} - Status: {{ c.status }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label font-weight-bold">Adjuster User ID</label>
+                    <input type="number" class="form-control" [(ngModel)]="assessmentData.adjusterId" placeholder="Adjuster User ID">
+                </div>
+            </div>
+
+            <!-- Inspect Claim Summary Panel -->
+            <div class="p-3 bg-light rounded-3 mb-4 border" *ngIf="selectedClaim">
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-search me-1"></i> Inspected Claim Details</h6>
+                <div class="row text-dark fs-8 mb-3">
+                    <div class="col-md-3"><strong>Claim ID:</strong> #{{ selectedClaim.claimId }}</div>
+                    <div class="col-md-3"><strong>Policy ID:</strong> Policy #{{ selectedClaim.policyId }}</div>
+                    <div class="col-md-3"><strong>Claim Type:</strong> {{ selectedClaim.claimType }}</div>
+                    <div class="col-md-3"><strong>Incident Date:</strong> {{ selectedClaim.incidentDate }}</div>
+                    <div class="col-md-3 mt-2"><strong>Claim Amount:</strong> ₹{{ selectedClaim.claimAmount | number }}</div>
+                    <div class="col-md-3 mt-2"><strong>Current Status:</strong> <span class="badge" [ngClass]="getStatusBadgeClass(selectedClaim.status)">{{ selectedClaim.status }}</span></div>
+                    <div class="col-md-6 mt-2"><strong>Incident Reason:</strong> {{ selectedClaim.reason || 'N/A' }}</div>
+                </div>
+
+                <!-- Customer Uploaded Documents Section -->
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="bi bi-folder2-open text-primary me-1"></i> Uploaded Documents & Evidence for Claim #{{ selectedClaim.claimId }}
+                    </h6>
+                    <div class="row g-2" *ngIf="selectedClaimDocs.length > 0">
+                        <div class="col-md-4" *ngFor="let doc of selectedClaimDocs">
+                            <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center text-truncate me-2">
+                                    <i class="bi bi-file-earmark-pdf fs-3 text-danger me-2" *ngIf="doc.name.endsWith('.pdf')"></i>
+                                    <i class="bi bi-file-earmark-image fs-3 text-success me-2" *ngIf="doc.name.endsWith('.jpg') || doc.name.endsWith('.png')"></i>
+                                    <i class="bi bi-file-earmark-word fs-3 text-primary me-2" *ngIf="!doc.name.endsWith('.pdf') && !doc.name.endsWith('.jpg') && !doc.name.endsWith('.png')"></i>
+                                    <div class="text-truncate">
+                                        <div class="fw-bold text-dark text-truncate fs-8">{{ doc.name }}</div>
+                                        <small class="text-muted fs-8">{{ doc.size }} • Uploaded: {{ doc.date }}</small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm px-2 fw-bold" (click)="viewDocument(doc)" title="View Attached Document">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Inputs -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label font-weight-bold">Approved Amount (₹)</label>
+                    <input type="number" class="form-control" [(ngModel)]="assessmentData.approvedAmount" placeholder="Enter approved amount in ₹">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label font-weight-bold">Assessment Date</label>
+                    <input type="date" class="form-control" [(ngModel)]="assessmentData.assessmentDate">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label font-weight-bold">Adjuster Notes & Inspection Findings</label>
+                    <textarea rows="3" class="form-control" [(ngModel)]="assessmentData.notes" placeholder="Enter inspection details, damage assessment notes, or rejection reasons..."></textarea>
+                </div>
+            </div>
+
+            <!-- Decision Buttons -->
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-3">
+                <button type="button" class="btn btn-danger btn-lg px-4 shadow-sm" (click)="rejectClaim()">
+                    <i class="bi bi-x-circle me-1"></i> Reject Claim
+                </button>
+                <button type="button" class="btn btn-success btn-lg px-4 shadow-sm" (click)="approveClaim()">
+                    <i class="bi bi-check-circle me-1"></i> Approve Claim
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Assessments List Table -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 font-weight-bold text-dark">Completed Claim Assessments</h5>
+            <span class="badge bg-secondary">{{ assessments.length }} Records</span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Assessment ID</th>
+                            <th>Claim ID</th>
+                            <th>Adjuster ID</th>
+                            <th>Approved Amount</th>
+                            <th>Notes</th>
+                            <th>Assessment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let a of assessments">
+                            <td><strong>#{{ a.assessmentId }}</strong></td>
+                            <td><span class="badge bg-light text-dark border">Claim #{{ a.claimId }}</span></td>
+                            <td>{{ a.adjusterId }}</td>
+                            <td class="fw-bold text-success">₹{{ a.approvedAmount | number }}</td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 300px;">{{ a.notes }}</div>
+                            </td>
+                            <td class="fs-8 text-muted">{{ a.assessmentDate }}</td>
+                        </tr>
+
+                        <tr *ngIf="assessments.length === 0 && !loading">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No claim assessments recorded yet. Select a claim above to perform an assessment.
+                            </td>
+                        </tr>
+
+                        <tr *ngIf="loading">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                Loading assessments from database...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

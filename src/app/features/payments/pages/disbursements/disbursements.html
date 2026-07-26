@@ -1,0 +1,77 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Payout Recommendations & Claim Disbursements</h2>
+            <p class="text-muted mb-0">Review payout recommendations for approved claims and process financial disbursements.</p>
+        </div>
+        <a routerLink="/claims/list" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Claims Directory
+        </a>
+    </div>
+
+    <div *ngIf="message" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle me-2"></i> {{ message }}
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 font-weight-bold text-dark">Approved Claims Payout Queue</h5>
+            <span class="badge bg-secondary">{{ disbursements.length }} Recommendations</span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Payout ID</th>
+                            <th>Approved Claim ID</th>
+                            <th>Payee Name</th>
+                            <th>Recommended Amount</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let d of disbursements">
+                            <td><strong>#{{ d.disbursementId }}</strong></td>
+                            <td><span class="badge bg-success-subtle text-success border border-success">Approved Claim #{{ d.claimId }}</span></td>
+                            <td>{{ d.payeeName }}</td>
+                            <td class="fw-bold text-success">₹{{ d.amount | number }}</td>
+                            <td>{{ d.paymentMethod }}</td>
+                            <td>
+                                <span class="status-badge" [ngClass]="{
+                                    'approved': d.status === 'PROCESSED',
+                                    'submitted': d.status === 'PENDING',
+                                    'rejected': d.status === 'FAILED'
+                                }">
+                                    {{ d.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-success" *ngIf="d.status === 'PENDING'" (click)="process(d.disbursementId!)" title="Process Payout">
+                                        <i class="bi bi-cash-stack"></i> Process Payout
+                                    </button>
+                                    <button class="btn btn-outline-danger" *ngIf="d.status === 'PENDING'" (click)="fail(d.disbursementId!)" title="Mark Failed">
+                                        <i class="bi bi-x-lg"></i> Fail
+                                    </button>
+                                    <button class="btn btn-outline-warning" *ngIf="d.status === 'FAILED'" (click)="retry(d.disbursementId!)" title="Retry Payout">
+                                        <i class="bi bi-arrow-clockwise"></i> Retry
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="disbursements.length === 0 && !loading">
+                            <td colspan="7" class="text-center py-4 text-muted">No payout recommendations found. Once an Adjuster approves a claim, it will appear here for payout.</td>
+                        </tr>
+                        <tr *ngIf="loading">
+                            <td colspan="7" class="text-center py-4 text-muted">Loading payout recommendations...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,105 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Fraud Detection</h2>
+            <p class="text-muted mb-0">Identify duplicate submissions, investigate suspicious indicators, and audit risk patterns.</p>
+        </div>
+        <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-shield-exclamation me-1"></i> Fraud Detection
+        </span>
+    </div>
+
+    <div *ngIf="message" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i> {{ message }}
+    </div>
+
+    <!-- Add Flag Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0 font-weight-bold"><i class="bi bi-flag-fill text-danger me-2"></i> Flag Suspicious Claim</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <input type="number" class="form-control form-control-sm" [(ngModel)]="newFlag.claimId" placeholder="Target Claim ID">
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" [(ngModel)]="newFlag.fraudType" placeholder="Fraud Indicator / Type">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select form-select-sm" [(ngModel)]="newFlag.severity">
+                        <option value="LOW">Low Severity</option>
+                        <option value="MEDIUM">Medium Severity</option>
+                        <option value="HIGH">High Severity</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-sm btn-danger w-100" (click)="addFlag()">
+                        <i class="bi bi-shield-slash me-1"></i> Log Flag
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Flagged Suspicious Claims Directory</span>
+            <span class="badge bg-secondary">{{ flags.length }} Flags</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Flag ID</th>
+                            <th>Claim ID</th>
+                            <th>Fraud Pattern / Indicator</th>
+                            <th>Severity Level</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let f of flags">
+                            <td><strong>#{{ f.flagId }}</strong></td>
+                            <td><span class="badge bg-light text-dark border">Claim #{{ f.claimId }}</span></td>
+                            <td>{{ f.fraudType }}</td>
+                            <td>
+                                <span class="badge" [ngClass]="{
+                                    'bg-danger': f.severity === 'HIGH',
+                                    'bg-warning text-dark': f.severity === 'MEDIUM',
+                                    'bg-info text-dark': f.severity === 'LOW'
+                                }">
+                                    {{ f.severity }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge" [ngClass]="{
+                                    'rejected': f.status === 'OPEN',
+                                    'review': f.status === 'INVESTIGATED',
+                                    'approved': f.status === 'CLEARED'
+                                }">
+                                    {{ f.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-warning" *ngIf="f.status === 'OPEN'" (click)="investigate(f.flagId!)" title="Investigate Flag">
+                                        <i class="bi bi-search"></i> Investigate
+                                    </button>
+                                    <button class="btn btn-outline-success" *ngIf="f.status !== 'CLEARED'" (click)="clearFlag(f.flagId!)" title="Clear Flag">
+                                        <i class="bi bi-check-circle"></i> Clear Flag
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr *ngIf="flags.length === 0">
+                            <td colspan="6" class="text-center py-4 text-muted">No fraud flags logged. Enter a Claim ID above to log a suspicious claim flag.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

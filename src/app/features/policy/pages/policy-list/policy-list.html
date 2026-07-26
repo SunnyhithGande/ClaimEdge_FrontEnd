@@ -1,0 +1,349 @@
+<div class="container-fluid py-4">
+
+    <!-- ==================== 1. POLICYHOLDER ROLE UI ==================== -->
+    <ng-container *ngIf="isPolicyHolder">
+        <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h2 class="mb-1 fw-bold text-dark">My Policies & Subscription</h2>
+                <p class="text-muted mb-0">Browse available insurance products, subscribe to policies, and manage active coverages.</p>
+            </div>
+        </div>
+
+        <!-- Alert Banner -->
+        <div *ngIf="message" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+            <span>{{ message }}</span>
+            <button type="button" class="btn-close" (click)="message = ''" aria-label="Close"></button>
+        </div>
+
+        <!-- POLICYHOLDER NAVIGATION TABS -->
+        <ul class="nav nav-pills custom-pills mb-4 bg-white p-2 rounded-4 shadow-sm border">
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'MY_POLICIES'" (click)="activeTab = 'MY_POLICIES'">
+                    <i class="bi bi-shield-check me-2"></i> My Subscribed Policies ({{ policies.length }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'SUBSCRIBE'" (click)="activeTab = 'SUBSCRIBE'">
+                    <i class="bi bi-bag-plus-fill me-2 text-warning"></i> Available Policies to Subscribe
+                </button>
+            </li>
+        </ul>
+
+        <!-- POLICYHOLDER TAB 1: MY SUBSCRIBED POLICIES -->
+        <div *ngIf="activeTab === 'MY_POLICIES'">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 font-weight-bold text-dark">
+                        <i class="bi bi-card-checklist text-primary me-2"></i> My Active & Subscribed Policies
+                    </h5>
+                    <span class="badge bg-primary px-3 py-2 fs-7">{{ policies.length }} Active Coverages</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Policy ID</th>
+                                    <th>Product Type</th>
+                                    <th>Coverage Amount</th>
+                                    <th>Annual Premium</th>
+                                    <th>Coverage Term</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Payment & Subscription Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let p of policies">
+                                    <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
+                                    <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
+                                    <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
+                                    <td><span class="text-success fw-bold">₹{{ p.premium | number }}</span></td>
+                                    <td>
+                                        <small class="text-muted d-block">{{ p.startDate }} to</small>
+                                        <small class="fw-bold text-dark">{{ p.endDate }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [ngClass]="{
+                                            'bg-success': p.status === 'Active',
+                                            'bg-info text-white': p.status === 'Approved - Pending Payment',
+                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'Pending Underwriting',
+                                            'bg-secondary': p.status === 'Lapsed',
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'Rejected'
+                                        }">
+                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active'"></i>
+                                            {{ p.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <!-- PROCEED TO PAYMENT BUTTON FOR APPROVED POLICIES -->
+                                        <button class="btn btn-success btn-sm fw-bold px-3 shadow-sm" *ngIf="p.status === 'Approved - Pending Payment'" (click)="goToPaymentModule(p)">
+                                            <i class="bi bi-credit-card me-1"></i> Proceed to Payment (₹{{ p.premium | number }})
+                                        </button>
+
+                                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fw-bold" *ngIf="p.status === 'Active'">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Active (Paid)
+                                        </span>
+
+                                        <span class="text-muted fs-8 ms-2" *ngIf="p.status === 'Pending Underwriting'">Awaiting Underwriter Approval</span>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="policies.length === 0">
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-shield-slash fs-2 d-block mb-2"></i>
+                                        No policies subscribed yet. Click on <strong>Available Policies to Subscribe</strong> to apply for coverage!
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POLICYHOLDER TAB 2: AVAILABLE POLICIES TO SUBSCRIBE -->
+        <div *ngIf="activeTab === 'SUBSCRIBE'">
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3" *ngFor="let plan of availablePlans">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden plan-card position-relative">
+                        <div class="card-header bg-primary text-white p-4 text-center border-0">
+                            <i class="bi {{ plan.icon }} fs-1 mb-2 d-block"></i>
+                            <h5 class="fw-bold mb-1">{{ plan.title }}</h5>
+                            <span class="badge bg-white text-primary fw-bold">{{ plan.productType }}</span>
+                        </div>
+
+                        <div class="card-body p-4 d-flex flex-column">
+                            <p class="text-muted fs-7 mb-3">{{ plan.description }}</p>
+
+                            <div class="price-banner bg-light p-3 rounded-3 mb-3 text-center border">
+                                <div class="text-muted fs-8">Coverage Sum Insured</div>
+                                <div class="fs-4 fw-bold text-dark">₹{{ plan.coverageAmount | number }}</div>
+                                <hr class="my-2">
+                                <div class="text-muted fs-8">Annual Premium</div>
+                                <div class="fs-5 fw-bold text-success">₹{{ plan.premium | number }}/year</div>
+                            </div>
+
+                            <ul class="list-unstyled mb-4 fs-7 flex-grow-1">
+                                <li class="mb-2" *ngFor="let feat of plan.features">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i> {{ feat }}
+                                </li>
+                            </ul>
+
+                            <button class="btn btn-primary w-100 py-2.5 font-weight-bold rounded-3 shadow-sm mt-auto" (click)="subscribeToPolicy(plan)">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Apply & Subscribe Policy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ==================== 2. POLICY ADMINISTRATOR / ADMIN ROLE UI ==================== -->
+    <ng-container *ngIf="!isPolicyHolder">
+        <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h2 class="mb-1 fw-bold text-dark">Policy Administration Workbench</h2>
+                <p class="text-muted mb-0">Manage insurance policy lifecycles, issue policy amendments, renew coverage, and track policyholders.</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-success font-weight-bold" *ngIf="isPolicyAdminOrAdmin()" (click)="showCreateModal = true">
+                    <i class="bi bi-plus-lg me-1"></i> Issue New Policy
+                </button>
+            </div>
+        </div>
+
+        <!-- Alert Banner -->
+        <div *ngIf="message" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+            <span>{{ message }}</span>
+            <button type="button" class="btn-close" (click)="message = ''" aria-label="Close"></button>
+        </div>
+
+        <!-- POLICY ADMINISTRATOR DISTINCT TABS -->
+        <ul class="nav nav-pills custom-pills mb-4 bg-white p-2 rounded-4 shadow-sm border">
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'POLICY_ADMIN'" (click)="activeTab = 'POLICY_ADMIN'">
+                    <i class="bi bi-sliders me-2"></i> Policy Administration ({{ adminMasterPolicies.length }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'POLICY_HOLDERS'" (click)="activeTab = 'POLICY_HOLDERS'">
+                    <i class="bi bi-person-lines-fill me-2 text-primary"></i> Policy Holders Directory ({{ policies.length }})
+                </button>
+            </li>
+        </ul>
+
+        <!-- POLICY ADMIN TAB 1: POLICY ADMINISTRATION (EXCLUDES PENDING UNDERWRITING; HAS ACTIVATE, CANCEL, AMEND, RENEW) -->
+        <div *ngIf="activeTab === 'POLICY_ADMIN'">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 font-weight-bold text-dark">
+                        <i class="bi bi-shield-lock-fill text-primary me-2"></i> Master Policy Administration Table
+                    </h5>
+                    <span class="badge bg-primary px-3 py-2 fs-7">{{ adminMasterPolicies.length }} Master Policies</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Policy ID</th>
+                                    <th>Product Type</th>
+                                    <th>Coverage Amount</th>
+                                    <th>Annual Premium</th>
+                                    <th>Coverage Period</th>
+                                    <th>Lifecycle Status</th>
+                                    <th class="text-end pe-4" *ngIf="isPolicyAdminOrAdmin()">Policy Administrator Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let p of adminMasterPolicies">
+                                    <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
+                                    <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
+                                    <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
+                                    <td><span class="text-success fw-bold">₹{{ p.premium | number }}</span></td>
+                                    <td>
+                                        <small class="text-muted d-block">{{ p.startDate }} to</small>
+                                        <small class="fw-bold text-dark">{{ p.endDate }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [ngClass]="{
+                                            'bg-success': p.status === 'Active',
+                                            'bg-warning text-dark': p.status === 'Draft',
+                                            'bg-secondary': p.status === 'Lapsed',
+                                            'bg-danger': p.status === 'Cancelled'
+                                        }">
+                                            {{ p.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active'" (click)="activatePolicy(p.policyId!)" title="Activate Policy">Activate</button>
+                                            <button class="btn btn-outline-primary" (click)="amendPolicy(p)" title="Amend Coverage & Premium">Amend</button>
+                                            <button class="btn btn-outline-info" (click)="renewPolicy(p.policyId!)" title="Renew Policy for 1 Year">Renew</button>
+                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active'" (click)="lapsePolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
+                                            <button class="btn btn-outline-danger" (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
+                                            <button class="btn btn-danger px-2" (click)="deletePolicy(p.policyId!)" title="Delete Policy"><i class="bi bi-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="adminMasterPolicies.length === 0">
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-shield-slash fs-2 d-block mb-2"></i>
+                                        No master policies found. Click on <strong>Issue New Policy</strong> to create a policy!
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POLICY ADMIN TAB 2: POLICY HOLDERS DIRECTORY (CONTAINS ONLY CANCEL BUTTON UNDER STATUS & ACTIONS) -->
+        <div *ngIf="activeTab === 'POLICY_HOLDERS'">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 font-weight-bold text-dark">
+                        <i class="bi bi-people-fill text-primary me-2"></i> Subscribed Policyholders Records
+                    </h5>
+                    <span class="badge bg-primary px-3 py-2 fs-7">{{ policies.length }} Policyholders</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Policy ID</th>
+                                    <th>Product Type</th>
+                                    <th>Policyholder ID</th>
+                                    <th>Coverage Amount</th>
+                                    <th>Annual Premium</th>
+                                    <th>Coverage Term</th>
+                                    <th>Payment & Lifecycle Status</th>
+                                    <th class="text-end pe-4">Status & Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let p of policies">
+                                    <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
+                                    <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
+                                    <td><span class="badge bg-light text-dark border fw-bold">Holder #{{ p.policyHolderId }}</span></td>
+                                    <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
+                                    <td><span class="text-success fw-bold">₹{{ p.premium | number }}</span></td>
+                                    <td>
+                                        <small class="text-muted d-block">{{ p.startDate }} to</small>
+                                        <small class="fw-bold text-dark">{{ p.endDate }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [ngClass]="{
+                                            'bg-success': p.status === 'Active',
+                                            'bg-info text-white': p.status === 'Approved - Pending Payment',
+                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'Pending Underwriting',
+                                            'bg-secondary': p.status === 'Lapsed',
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'Rejected'
+                                        }">
+                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active'"></i>
+                                            {{ p.status }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <!-- ONLY CANCEL BUTTON FOR POLICY ADMINISTRATOR TO CANCEL POLICYHOLDER'S POLICY -->
+                                        <button class="btn btn-sm btn-outline-danger px-3 font-weight-bold" (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">
+                                            <i class="bi bi-x-circle me-1"></i> Cancel
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr *ngIf="policies.length === 0">
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        No policyholder records found.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- CREATE POLICY MODAL (Policy Administrator) -->
+    <div *ngIf="showCreateModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title font-weight-bold">Issue New Policy</h5>
+                    <button type="button" class="btn-close btn-close-white" (click)="showCreateModal = false"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Product Type</label>
+                        <select class="form-select" [(ngModel)]="newPolicy.productType">
+                            <option *ngFor="let pt of productTypes" [value]="pt">{{ pt }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Coverage Amount (₹)</label>
+                        <input type="number" class="form-control" [(ngModel)]="newPolicy.coverageAmount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Annual Premium (₹)</label>
+                        <input type="number" class="form-control" [(ngModel)]="newPolicy.premium">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Initial Policy Status</label>
+                        <select class="form-select" [(ngModel)]="newPolicy.status">
+                            <option *ngFor="let st of statusOptions" [value]="st">{{ st }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="showCreateModal = false">Cancel</button>
+                    <button type="button" class="btn btn-success font-weight-bold" (click)="createPolicy()">Create Policy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

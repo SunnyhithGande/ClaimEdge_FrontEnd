@@ -1,0 +1,23 @@
+@if (showLayout) {
+
+  <app-header></app-header>
+
+  <div class="main-layout" [class.full-width]="!layoutService.isSidebarVisible">
+
+    <app-sidebar *ngIf="layoutService.isSidebarVisible"></app-sidebar>
+
+    <div class="content-area">
+
+      <router-outlet></router-outlet>
+
+    </div>
+
+  </div>
+
+  <app-footer></app-footer>
+
+} @else {
+
+  <router-outlet></router-outlet>
+
+}

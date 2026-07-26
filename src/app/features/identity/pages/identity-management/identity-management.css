@@ -1,0 +1,60 @@
+.container-fluid {
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.page-header h2 {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.card {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 16px 24px;
+}
+
+.avatar-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #0284c7;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.approved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.role-select {
+    width: 150px;
+    border-radius: 8px;
+    font-weight: 500;
+}

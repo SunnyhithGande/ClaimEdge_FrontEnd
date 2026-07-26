@@ -1,0 +1,51 @@
+.container-fluid {
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.page-header h2 {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.card {
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+}
+
+.card-header {
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 16px 24px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.submitted {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.approved {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.review {
+    background: #fef3c7;
+    color: #d97706;
+}
