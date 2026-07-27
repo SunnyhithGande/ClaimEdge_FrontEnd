@@ -37,7 +37,7 @@
                     <h5 class="mb-0 font-weight-bold text-dark">
                         <i class="bi bi-card-checklist text-primary me-2"></i> My Active & Subscribed Policies
                     </h5>
-                    <span class="badge bg-primary px-3 py-2 fs-7">{{ policies.length }} Active Coverages</span>
+                    <span class="badge bg-primary px-3 py-2 fs-7">{{ policies.length }} Coverages</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -47,9 +47,9 @@
                                     <th>Policy ID</th>
                                     <th>Product Type</th>
                                     <th>Coverage Amount</th>
-                                    <th>Annual Premium</th>
-                                    <th>Coverage Term</th>
-                                    <th>Status</th>
+                                    <th>Approved Premium</th>
+                                    <th>Underwriter Remarks</th>
+                                    <th>Application Status</th>
                                     <th class="text-end pe-4">Payment & Subscription Action</th>
                                 </tr>
                             </thead>
@@ -60,18 +60,18 @@
                                     <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
                                     <td><span class="text-success fw-bold">₹{{ p.premium | number }}</span></td>
                                     <td>
-                                        <small class="text-muted d-block">{{ p.startDate }} to</small>
-                                        <small class="fw-bold text-dark">{{ p.endDate }}</small>
+                                        <small class="text-muted" *ngIf="p.underwriterRemarks"><i class="bi bi-chat-left-text me-1"></i> {{ p.underwriterRemarks }}</small>
+                                        <small class="text-muted italic" *ngIf="!p.underwriterRemarks">Pending Underwriting Review</small>
                                     </td>
                                     <td>
                                         <span class="badge" [ngClass]="{
-                                            'bg-success': p.status === 'Active',
+                                            'bg-success text-white': p.status === 'Active' || p.status === 'ACTIVE',
                                             'bg-info text-white': p.status === 'Approved - Pending Payment',
-                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'Pending Underwriting',
-                                            'bg-secondary': p.status === 'Lapsed',
-                                            'bg-danger': p.status === 'Cancelled' || p.status === 'Rejected'
+                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'DRAFT' || p.status === 'Pending Underwriting',
+                                            'bg-secondary': p.status === 'Lapsed' || p.status === 'LAPSED' || p.status === 'Referred',
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Rejected' || p.status === 'Declined'
                                         }">
-                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active'"></i>
+                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'"></i>
                                             {{ p.status }}
                                         </span>
                                     </td>
@@ -81,11 +81,11 @@
                                             <i class="bi bi-credit-card me-1"></i> Proceed to Payment (₹{{ p.premium | number }})
                                         </button>
 
-                                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fw-bold" *ngIf="p.status === 'Active'">
-                                            <i class="bi bi-check-circle-fill me-1"></i> Active (Paid)
+                                        <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fw-bold" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'">
+                                            <i class="bi bi-check-circle-fill me-1"></i> PAID
                                         </span>
 
-                                        <span class="text-muted fs-8 ms-2" *ngIf="p.status === 'Pending Underwriting'">Awaiting Underwriter Approval</span>
+                                        <span class="text-muted fs-8 ms-2" *ngIf="p.status === 'Pending Underwriting'">Awaiting Underwriter Risk Review</span>
                                     </td>
                                 </tr>
                                 <tr *ngIf="policies.length === 0">
@@ -129,10 +129,163 @@
                                 </li>
                             </ul>
 
-                            <button class="btn btn-primary w-100 py-2.5 font-weight-bold rounded-3 shadow-sm mt-auto" (click)="subscribeToPolicy(plan)">
+                            <button class="btn btn-primary w-100 py-2.5 font-weight-bold rounded-3 shadow-sm mt-auto" (click)="openProposalForm(plan)">
                                 <i class="bi bi-box-arrow-in-right me-1"></i> Apply & Subscribe Policy
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DYNAMIC PROPOSAL FORM MODAL -->
+        <div *ngIf="showProposalModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title font-weight-bold">
+                            <i class="bi bi-file-earmark-text me-2"></i> Proposal Application Form: {{ selectedPlanForProposal?.title }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" (click)="showProposalModal = false"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-0 mb-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Please fill in the risk assessment details for <strong>{{ selectedPlanForProposal?.productType }}</strong>. Only factors relevant to this product will be evaluated.
+                        </div>
+
+                        <!-- 1. HEALTH INSURANCE RISK FACTORS -->
+                        <div *ngIf="selectedPlanForProposal?.productType === 'Health Insurance'">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Applicant Age</label>
+                                    <input type="number" class="form-control" [(ngModel)]="proposalForm.healthAge" placeholder="Age in Years">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Smoking Status</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.smokingStatus">
+                                        <option value="No">No (Non-Smoker)</option>
+                                        <option value="Yes">Yes (Smoker)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Existing Medical Conditions</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.medicalConditions">
+                                        <option value="None">None (Clean Medical Record)</option>
+                                        <option value="Diabetes">Diabetes</option>
+                                        <option value="Hypertension">Hypertension / BP</option>
+                                        <option value="Asthma">Asthma / Respiratory</option>
+                                        <option value="Other">Other Chronic Condition</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Body Mass Index (BMI)</label>
+                                    <input type="number" step="0.1" class="form-control" [(ngModel)]="proposalForm.bmi" placeholder="e.g. 23.5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. MOTOR INSURANCE RISK FACTORS -->
+                        <div *ngIf="selectedPlanForProposal?.productType === 'Motor Insurance'">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Vehicle Age (Years)</label>
+                                    <input type="number" class="form-control" [(ngModel)]="proposalForm.vehicleAge" placeholder="e.g. 3">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Driver Age & Experience</label>
+                                    <input type="text" class="form-control" [(ngModel)]="proposalForm.driverExp" placeholder="e.g. 32 Yrs / 5 Yrs Experience">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Accident / Claim History</label>
+                                    <input type="number" class="form-control" [(ngModel)]="proposalForm.accidentHistory" placeholder="Number of past claims">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Vehicle Usage</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.vehicleUsage">
+                                        <option value="Personal">Personal / Private Use</option>
+                                        <option value="Commercial">Commercial / Taxi Fleet</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. LIFE INSURANCE RISK FACTORS -->
+                        <div *ngIf="selectedPlanForProposal?.productType === 'Life Insurance'">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Applicant Age</label>
+                                    <input type="number" class="form-control" [(ngModel)]="proposalForm.lifeAge" placeholder="Age in Years">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Smoking / Alcohol Habits</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.habits">
+                                        <option value="None">None (Neither)</option>
+                                        <option value="Social Drinker">Social Drinker</option>
+                                        <option value="Regular Smoker">Regular Smoker</option>
+                                        <option value="Heavy Smoker & Drinker">Heavy Smoker & Drinker</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Medical History</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.lifeMedicalHistory">
+                                        <option value="Clean">Clean (No Family History)</option>
+                                        <option value="Heart Disease">Family Heart Disease History</option>
+                                        <option value="Diabetes">Diabetes History</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Occupation Risk Level</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.occupationRisk">
+                                        <option value="Low Risk / Desk Job">Low Risk / Office & Desk Job</option>
+                                        <option value="Medium Risk / Field Work">Medium Risk / Sales & Field</option>
+                                        <option value="High Risk / Construction">High Risk / Construction & Aviation</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. PROPERTY INSURANCE RISK FACTORS -->
+                        <div *ngIf="selectedPlanForProposal?.productType === 'Property Insurance'">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Property Age (Years)</label>
+                                    <input type="number" class="form-control" [(ngModel)]="proposalForm.propertyAge" placeholder="e.g. 5">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Property Location (Risk Zone)</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.propertyLocation">
+                                        <option value="Low Risk Zone">Low Risk Residential Zone</option>
+                                        <option value="Medium Risk Zone / Coastal">Medium Risk / Coastal Area</option>
+                                        <option value="High Flood Zone">High Flood / Seismic Zone</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Construction Type</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.constructionType">
+                                        <option value="Concrete / RCC">Concrete / RCC Structure</option>
+                                        <option value="Brick Masonry">Brick Masonry</option>
+                                        <option value="Timber / Wood Frame">Timber / Wood Frame Structure</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Safety Measures Installed</label>
+                                    <select class="form-select" [(ngModel)]="proposalForm.safetyMeasures">
+                                        <option value="Fire Alarms & Sprinklers">Fire Alarms & Automatic Sprinklers</option>
+                                        <option value="CCTV & Security Staff">CCTV & 24/7 Security Staff</option>
+                                        <option value="Basic Locks Only">Basic Manual Locks Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" (click)="showProposalModal = false" [disabled]="submittingProposal">Cancel</button>
+                        <button type="button" class="btn btn-success fw-bold px-4" (click)="submitProposalApplication()" [disabled]="submittingProposal">
+                            <span *ngIf="submittingProposal"><i class="bi bi-arrow-repeat me-1"></i> Submitting...</span>
+                            <span *ngIf="!submittingProposal"><i class="bi bi-send me-1"></i> Submit Proposal Application</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -149,7 +302,7 @@
 
             <div class="d-flex align-items-center gap-2">
                 <button class="btn btn-success font-weight-bold" *ngIf="isPolicyAdminOrAdmin()" (click)="showCreateModal = true">
-                    <i class="bi bi-plus-lg me-1"></i> Issue New Policy
+                    <i class="bi bi-plus-lg me-1"></i> Create New Policy
                 </button>
             </div>
         </div>
@@ -175,7 +328,7 @@
             </li>
         </ul>
 
-        <!-- POLICY ADMIN TAB 1: POLICY ADMINISTRATION (EXCLUDES PENDING UNDERWRITING; HAS ACTIVATE, CANCEL, AMEND, RENEW) -->
+        <!-- POLICY ADMIN TAB 1: POLICY ADMINISTRATION -->
         <div *ngIf="activeTab === 'POLICY_ADMIN'">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
@@ -210,20 +363,19 @@
                                     </td>
                                     <td>
                                         <span class="badge" [ngClass]="{
-                                            'bg-success': p.status === 'Active',
-                                            'bg-warning text-dark': p.status === 'Draft',
-                                            'bg-secondary': p.status === 'Lapsed',
-                                            'bg-danger': p.status === 'Cancelled'
+                                            'bg-success text-white': p.status === 'Active' || p.status === 'ACTIVE',
+                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'DRAFT',
+                                            'bg-secondary': p.status === 'Lapsed' || p.status === 'LAPSED',
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'CANCELLED'
                                         }">
                                             {{ p.status }}
                                         </span>
                                     </td>
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active'" (click)="activatePolicy(p.policyId!)" title="Activate Policy">Activate</button>
-                                            <button class="btn btn-outline-primary" (click)="amendPolicy(p)" title="Amend Coverage & Premium">Amend</button>
+                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE'" (click)="activatePolicy(p.policyId!)" title="Activate Policy">Activate</button>
                                             <button class="btn btn-outline-info" (click)="renewPolicy(p.policyId!)" title="Renew Policy for 1 Year">Renew</button>
-                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active'" (click)="lapsePolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
+                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="lapsePolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
                                             <button class="btn btn-outline-danger" (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
                                             <button class="btn btn-danger px-2" (click)="deletePolicy(p.policyId!)" title="Delete Policy"><i class="bi bi-trash"></i></button>
                                         </div>
@@ -232,7 +384,7 @@
                                 <tr *ngIf="adminMasterPolicies.length === 0">
                                     <td colspan="7" class="text-center py-5 text-muted">
                                         <i class="bi bi-shield-slash fs-2 d-block mb-2"></i>
-                                        No master policies found. Click on <strong>Issue New Policy</strong> to create a policy!
+                                        No master policies found. Click on <strong>Create New Policy</strong> to create a policy!
                                     </td>
                                 </tr>
                             </tbody>
@@ -242,7 +394,7 @@
             </div>
         </div>
 
-        <!-- POLICY ADMIN TAB 2: POLICY HOLDERS DIRECTORY (CONTAINS ONLY CANCEL BUTTON UNDER STATUS & ACTIONS) -->
+        <!-- POLICY ADMIN TAB 2: POLICY HOLDERS DIRECTORY -->
         <div *ngIf="activeTab === 'POLICY_HOLDERS'">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
@@ -279,18 +431,17 @@
                                     </td>
                                     <td>
                                         <span class="badge" [ngClass]="{
-                                            'bg-success': p.status === 'Active',
+                                            'bg-success text-white': p.status === 'Active' || p.status === 'ACTIVE',
                                             'bg-info text-white': p.status === 'Approved - Pending Payment',
-                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'Pending Underwriting',
-                                            'bg-secondary': p.status === 'Lapsed',
-                                            'bg-danger': p.status === 'Cancelled' || p.status === 'Rejected'
+                                            'bg-warning text-dark': p.status === 'Draft' || p.status === 'DRAFT' || p.status === 'Pending Underwriting',
+                                            'bg-secondary': p.status === 'Lapsed' || p.status === 'LAPSED',
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Rejected'
                                         }">
-                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active'"></i>
+                                            <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'"></i>
                                             {{ p.status }}
                                         </span>
                                     </td>
                                     <td class="text-end pe-3">
-                                        <!-- ONLY CANCEL BUTTON FOR POLICY ADMINISTRATOR TO CANCEL POLICYHOLDER'S POLICY -->
                                         <button class="btn btn-sm btn-outline-danger px-3 font-weight-bold" (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">
                                             <i class="bi bi-x-circle me-1"></i> Cancel
                                         </button>
@@ -314,7 +465,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title font-weight-bold">Issue New Policy</h5>
+                    <h5 class="modal-title font-weight-bold">Create New Policy</h5>
                     <button type="button" class="btn-close btn-close-white" (click)="showCreateModal = false"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -340,8 +491,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" (click)="showCreateModal = false">Cancel</button>
-                    <button type="button" class="btn btn-success font-weight-bold" (click)="createPolicy()">Create Policy</button>
+                    <button type="button" class="btn btn-secondary" (click)="showCreateModal = false" [disabled]="creatingPolicyState">Cancel</button>
+                    <button type="button" class="btn btn-success font-weight-bold" (click)="createPolicy()" [disabled]="creatingPolicyState">
+                        <span *ngIf="creatingPolicyState"><i class="bi bi-arrow-repeat me-1"></i> Creating...</span>
+                        <span *ngIf="!creatingPolicyState">Create Policy</span>
+                    </button>
                 </div>
             </div>
         </div>

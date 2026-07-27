@@ -1,26 +1,16 @@
 .register-page {
-
     min-height: 100vh;
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
-    background: #f4f6f9;
+    background: #f8fafc;
 }
 
 .register-card {
-
-    width: 550px;
-
-    background: white;
-
+    width: 520px;
+    background: #ffffff;
     padding: 40px;
-
-    border-radius: 20px;
-
-    box-shadow: 0 5px 20px rgba(0,0,0,.1);
-
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }

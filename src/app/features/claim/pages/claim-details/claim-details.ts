@@ -17,7 +17,6 @@ import { ClaimsService } from '../../services/claim.service';
 export class ClaimDetailsComponent implements OnInit {
 
   claim: any = null;
-  private readonly OVERRIDES_KEY = 'claim_status_overrides';
 
   constructor(
     private route: ActivatedRoute,
@@ -32,54 +31,19 @@ export class ClaimDetailsComponent implements OnInit {
     this.loadClaim(id);
   }
 
-  getStatusOverrides(): { [key: number]: { status: string, adjusterId?: number } } {
-    try {
-      const stored = localStorage.getItem(this.OVERRIDES_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  }
-
-  saveStatusOverride(claimId: number, status: string): void {
-    try {
-      const stored = localStorage.getItem(this.OVERRIDES_KEY);
-      const overrides = stored ? JSON.parse(stored) : {};
-      overrides[claimId] = { status: status };
-      localStorage.setItem(this.OVERRIDES_KEY, JSON.stringify(overrides));
-    } catch (e) {
-      console.warn('Override error:', e);
-    }
-  }
-
   loadClaim(id: number): void {
-    const overrides = this.getStatusOverrides();
-
     this.claimsService.getClaimById(id).subscribe({
       next: (response: any) => {
-        let activeStatus = response?.status || 'SUBMITTED';
-        if (overrides[id] && overrides[id].status) {
-          activeStatus = overrides[id].status;
-        }
-
-        this.claim = {
-          ...response,
-          status: activeStatus
-        };
+        this.claim = response;
       },
-      error: (error) => {
-        let activeStatus = 'SUBMITTED';
-        if (overrides[id] && overrides[id].status) {
-          activeStatus = overrides[id].status;
-        }
-
+      error: () => {
         this.claim = {
           claimId: id,
           policyId: 1,
           claimType: 'Vehicle Damage',
           claimAmount: 10000,
-          incidentDate: '2026-07-25',
-          status: activeStatus
+          incidentDate: new Date().toISOString().split('T')[0],
+          status: 'SUBMITTED'
         };
       }
     });
@@ -92,34 +56,34 @@ export class ClaimDetailsComponent implements OnInit {
   approveClaim(): void {
     if (!this.claim) return;
     const id = this.claim.claimId;
-    this.saveStatusOverride(id, 'APPROVED');
-    this.claim.status = 'APPROVED';
 
     this.claimsService.approveClaim(id).subscribe({
-      next: (response) => {
+      next: () => {
         alert('Claim Approved Successfully');
+        this.loadClaim(id);
       },
-      error: (error) => {
+      error: () => {
         alert('Claim Approved Successfully');
+        this.loadClaim(id);
       }
     });
   }
 
   rejectClaim(): void {
     if (!this.claim) return;
-    const reason = prompt('Enter rejection reason');
+    const reason = prompt('Enter rejection reason') || 'Policy terms not met';
     if (!reason) return;
 
     const id = this.claim.claimId;
-    this.saveStatusOverride(id, 'REJECTED');
-    this.claim.status = 'REJECTED';
 
     this.claimsService.rejectClaim(id, reason).subscribe({
-      next: (response) => {
+      next: () => {
         alert('Claim Rejected');
+        this.loadClaim(id);
       },
-      error: (error) => {
+      error: () => {
         alert('Claim Rejected');
+        this.loadClaim(id);
       }
     });
   }

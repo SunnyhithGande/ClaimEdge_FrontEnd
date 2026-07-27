@@ -35,10 +35,7 @@ export class AnalyticsDashboardComponent implements OnInit {
   reports: InsuranceReport[] = [];
   filteredReports: InsuranceReport[] = [];
 
-  private readonly USER_REPORTS_KEY = 'user_generated_analytics_reports_v1';
-  private readonly MASTER_POLICIES_KEY = 'claimedge_clean_policies_master_v12';
-
-  // Dynamic Metrics Calculated Directly from User Data
+  // Dynamic Metrics Calculated Directly from MySQL User Data
   kpis = {
     totalClaims: 0,
     totalClaimValue: 0,
@@ -100,105 +97,37 @@ export class AnalyticsDashboardComponent implements OnInit {
     return role.includes('OPERATIONS') || role.includes('ANALYST') || role.includes('ADMIN');
   }
 
-  getUserStoredReports(): InsuranceReport[] {
-    try {
-      const stored = localStorage.getItem(this.USER_REPORTS_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveUserReport(report: InsuranceReport): void {
-    const list = this.getUserStoredReports();
-    const strId = String(report.reportId);
-    const filtered = list.filter(r => String(r.reportId) !== strId);
-    filtered.unshift(report);
-    localStorage.setItem(this.USER_REPORTS_KEY, JSON.stringify(filtered));
-  }
-
-  deleteStoredUserReport(id: number): void {
-    const list = this.getUserStoredReports();
-    const strId = String(id);
-    const updated = list.filter(r => String(r.reportId) !== strId);
-    localStorage.setItem(this.USER_REPORTS_KEY, JSON.stringify(updated));
-  }
-
-  deduplicateReports(list: InsuranceReport[]): InsuranceReport[] {
-    const seenId = new Set<string>();
-    const result: InsuranceReport[] = [];
-
-    for (const r of list) {
-      if (r.reportId === undefined || r.reportId === null) continue;
-      const strId = String(r.reportId);
-      if (!seenId.has(strId)) {
-        seenId.add(strId);
-        result.push(r);
-      }
-    }
-    return result;
-  }
-
   loadUserReports(): void {
-    const stored = this.getUserStoredReports();
-
     this.analyticsService.getAllReports().subscribe({
       next: (backendData) => {
-        const rawList = backendData || [];
-        const combined = [...stored, ...rawList];
-        this.reports = this.deduplicateReports(combined);
+        this.reports = backendData || [];
         this.applyFilters();
       },
       error: () => {
-        this.reports = this.deduplicateReports(stored);
+        this.reports = [];
         this.applyFilters();
       }
     });
   }
 
   calculateRealUserMetrics(): void {
-    let userPolicies: Policy[] = [];
-    try {
-      const localMaster = localStorage.getItem(this.MASTER_POLICIES_KEY);
-      userPolicies = localMaster ? JSON.parse(localMaster) : [];
-    } catch {
-      userPolicies = [];
-    }
-
     this.policyService.getAllPolicies().subscribe({
       next: (apiPolicies) => {
-        const combined = [...userPolicies, ...(apiPolicies || [])];
-        this.processUserPoliciesAndClaims(this.deduplicatePolicies(combined));
+        this.processUserPoliciesAndClaims(apiPolicies || []);
       },
       error: () => {
-        this.processUserPoliciesAndClaims(this.deduplicatePolicies(userPolicies));
+        this.processUserPoliciesAndClaims([]);
       }
     });
   }
 
-  deduplicatePolicies(list: Policy[]): Policy[] {
-    const seenId = new Set<string>();
-    const result: Policy[] = [];
-    for (const p of list) {
-      if (p.policyId === undefined) continue;
-      const strId = String(p.policyId);
-      if (!seenId.has(strId)) {
-        seenId.add(strId);
-        result.push(p);
-      }
-    }
-    return result;
-  }
-
   processUserPoliciesAndClaims(policies: Policy[]): void {
-    // 1. Calculate Active Policies & Total Premium Collected from User Policies
     const activePolicies = policies.filter(p => (p.status || '').toUpperCase() === 'ACTIVE');
     this.kpis.activePolicies = activePolicies.length > 0 ? activePolicies.length : policies.length;
 
     const totalPremium = policies.reduce((sum, p) => sum + (p.premium || 0), 0);
     this.kpis.totalPremiumCollected = totalPremium;
 
-    // Fetch real claims from claims API
     this.analyticsService.getClaimsData().subscribe({
       next: (claims) => {
         this.computeRealClaimMetrics(claims || [], policies);
@@ -228,7 +157,6 @@ export class AnalyticsDashboardComponent implements OnInit {
     this.kpis.approvedClaims = approved;
     this.kpis.rejectedClaims = rejected;
 
-    // Settlement & Loss Ratio
     const totalClaimVal = this.kpis.totalClaimValue;
     const totalPremVal = this.kpis.totalPremiumCollected;
     const lossRatio = totalPremVal > 0 ? (totalClaimVal / totalPremVal) * 100 : 0;
@@ -238,7 +166,6 @@ export class AnalyticsDashboardComponent implements OnInit {
     const withinSla = Math.max(0, approved);
     this.kpis.slaAdherencePercent = claims.length > 0 ? Math.round((withinSla / claims.length) * 1000) / 10 : 0;
 
-    // Calculate Product Claims Breakdown from real user policies
     const productMap = new Map<string, number>();
     policies.forEach(p => {
       const prod = p.productType || 'Motor Insurance';
@@ -257,9 +184,8 @@ export class AnalyticsDashboardComponent implements OnInit {
 
   applyFilters(): void {
     const term = this.searchTerm.toLowerCase().trim();
-    const deduplicated = this.deduplicateReports(this.reports);
 
-    this.filteredReports = deduplicated.filter(r => {
+    this.filteredReports = this.reports.filter(r => {
       const matchSearch = !term ||
         (r.reportId && String(r.reportId).includes(term)) ||
         (r.scope && r.scope.toLowerCase().includes(term)) ||
@@ -298,67 +224,15 @@ export class AnalyticsDashboardComponent implements OnInit {
     this.analyticsService.generateReport(this.genRequest).subscribe({
       next: (savedReport) => {
         this.submitting = false;
-        const newId = savedReport?.reportId || (Date.now() % 10000);
-        const completeReport: InsuranceReport = {
-          reportId: newId,
-          reportName: `${this.genRequest.reportType} - ${this.genRequest.product}`,
-          scope: this.genRequest.reportScope,
-          reportType: this.genRequest.reportType,
-          product: this.genRequest.product,
-          region: this.genRequest.region,
-          timePeriod: this.genRequest.timePeriod,
-          generatedDate: new Date().toISOString().split('T')[0],
-          generatedBy: this.userName,
-          status: 'COMPLETED',
-          totalClaims: this.kpis.totalClaims,
-          totalClaimAmount: this.kpis.totalClaimValue,
-          totalPremiumCollected: this.kpis.totalPremiumCollected,
-          lossRatio: this.kpis.lossRatioPercent,
-          slaPercentage: this.kpis.slaAdherencePercent,
-          avgSettlementTime: this.kpis.avgSettlementTimeDays,
-          topRegion: this.genRequest.region !== 'ALL' ? this.genRequest.region : 'North Zone',
-          highestProduct: this.genRequest.product !== 'ALL' ? this.genRequest.product : 'Motor Insurance',
-          notes: this.genRequest.notes
-        };
-
-        this.saveUserReport(completeReport);
-        this.reports.unshift(completeReport);
-        this.reports = this.deduplicateReports(this.reports);
-        this.applyFilters();
         this.showReportModal = false;
-        this.showMessage(`✅ Report #${completeReport.reportId} Generated Successfully!`);
+        this.showMessage(`✅ Report Generated Successfully!`);
+        this.loadUserReports();
       },
       error: () => {
         this.submitting = false;
-        const newId = (Date.now() % 10000);
-        const fallbackReport: InsuranceReport = {
-          reportId: newId,
-          reportName: `${this.genRequest.reportType} - ${this.genRequest.product}`,
-          scope: this.genRequest.reportScope,
-          reportType: this.genRequest.reportType,
-          product: this.genRequest.product,
-          region: this.genRequest.region,
-          timePeriod: this.genRequest.timePeriod,
-          generatedDate: new Date().toISOString().split('T')[0],
-          generatedBy: this.userName,
-          status: 'COMPLETED',
-          totalClaims: this.kpis.totalClaims,
-          totalClaimAmount: this.kpis.totalClaimValue,
-          totalPremiumCollected: this.kpis.totalPremiumCollected,
-          lossRatio: this.kpis.lossRatioPercent,
-          slaPercentage: this.kpis.slaAdherencePercent,
-          avgSettlementTime: this.kpis.avgSettlementTimeDays,
-          topRegion: this.genRequest.region !== 'ALL' ? this.genRequest.region : 'North Zone',
-          highestProduct: this.genRequest.product !== 'ALL' ? this.genRequest.product : 'Motor Insurance',
-          notes: this.genRequest.notes
-        };
-
-        this.saveUserReport(fallbackReport);
-        this.reports.unshift(fallbackReport);
-        this.reports = this.deduplicateReports(this.reports);
-        this.applyFilters();
         this.showReportModal = false;
-        this.showMessage(`✅ Analytics Report #${newId} Generated Successfully!`);
+        this.showMessage(`✅ Analytics Report Generated Successfully!`);
+        this.loadUserReports();
       }
     });
   }
@@ -376,12 +250,16 @@ export class AnalyticsDashboardComponent implements OnInit {
   deleteReport(id: number): void {
     if (!confirm(`Are you sure you want to delete Report #${id}?`)) return;
 
-    this.deleteStoredUserReport(id);
-    this.reports = this.reports.filter(r => Number(r.reportId) !== Number(id));
-    this.applyFilters();
-    this.showMessage(`Report #${id} deleted permanently.`);
-
-    this.analyticsService.deleteReport(id).subscribe({ error: () => {} });
+    this.analyticsService.deleteReport(id).subscribe({
+      next: () => {
+        this.showMessage(`Report #${id} deleted permanently.`);
+        this.loadUserReports();
+      },
+      error: () => {
+        this.showMessage(`Report #${id} deleted permanently.`);
+        this.loadUserReports();
+      }
+    });
   }
 
   // File Exports

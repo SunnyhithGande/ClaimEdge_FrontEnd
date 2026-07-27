@@ -59,7 +59,6 @@ export class AssessmentsComponent implements OnInit {
 
   message: string = '';
   loading = false;
-  private readonly OVERRIDES_KEY = 'claim_status_overrides';
 
   ngOnInit(): void {
     const u = this.authService.getUser();
@@ -73,44 +72,10 @@ export class AssessmentsComponent implements OnInit {
     this.loadAssessments();
   }
 
-  getStatusOverrides(): { [key: number]: { status: string, adjusterId?: number } } {
-    try {
-      const stored = localStorage.getItem(this.OVERRIDES_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  }
-
-  saveStatusOverride(claimId: number, status: string, adjusterId?: number): void {
-    try {
-      const overrides = this.getStatusOverrides();
-      overrides[claimId] = {
-        status: status,
-        adjusterId: adjusterId !== undefined ? adjusterId : overrides[claimId]?.adjusterId
-      };
-      localStorage.setItem(this.OVERRIDES_KEY, JSON.stringify(overrides));
-    } catch (e) {
-      console.warn('Error saving override:', e);
-    }
-  }
-
   loadSubmittedClaims(): void {
-    const overrides = this.getStatusOverrides();
-
     this.claimsService.getAllClaims().subscribe({
       next: (data) => {
-        const rawList = data || [];
-        this.submittedClaims = rawList.map((c: any) => {
-          if (overrides[c.claimId] && overrides[c.claimId].status) {
-            return {
-              ...c,
-              status: overrides[c.claimId].status
-            };
-          }
-          return c;
-        });
-
+        this.submittedClaims = data || [];
         if (this.submittedClaims.length > 0) {
           const currentIdStr = this.assessmentData.claimId || this.submittedClaims[0].claimId.toString();
           this.onClaimSelect(currentIdStr);
@@ -123,32 +88,31 @@ export class AssessmentsComponent implements OnInit {
   }
 
   getDocumentsForClaim(claimId: number): UploadedDoc[] {
-    try {
-      const storedAll = localStorage.getItem('claim_documents_store');
-      const store = storedAll ? JSON.parse(storedAll) : {};
-      if (store[claimId] && store[claimId].length > 0) {
-        return store[claimId];
-      }
-    } catch {}
-
+    const saved = localStorage.getItem(`docs_claim_${claimId}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
     return [
-      { name: `Incident_Damage_Photo_Claim#${claimId}.jpg`, size: '1.8 MB', date: new Date().toISOString().split('T')[0], type: 'image/jpeg' },
-      { name: `Repair_Estimate_Bill_Claim#${claimId}.pdf`, size: '0.4 MB', date: new Date().toISOString().split('T')[0], type: 'application/pdf' },
-      { name: `Policyholder_ID_Proof_Claim#${claimId}.pdf`, size: '0.6 MB', date: new Date().toISOString().split('T')[0], type: 'application/pdf' }
+      { name: `Insurance_Report_Claim#${claimId}.pdf`, size: '1.2 MB', date: new Date().toISOString().split('T')[0], type: 'application/pdf' }
     ];
   }
 
   onClaimSelect(claimIdStr: string): void {
     const id = Number(claimIdStr);
-    const overrides = this.getStatusOverrides();
     const found = this.submittedClaims.find(c => Number(c.claimId) === id);
 
     if (found) {
-      const finalStatus = overrides[id]?.status || found.status;
-      this.selectedClaim = { ...found, status: finalStatus };
+      this.selectedClaim = { ...found };
       this.assessmentData.claimId = id.toString();
       this.assessmentData.approvedAmount = found.claimAmount ? found.claimAmount.toString() : '';
       this.selectedClaimDocs = this.getDocumentsForClaim(id);
+      
+      if (found.assignedAdjusterId) {
+        this.assessmentData.adjusterId = found.assignedAdjusterId.toString();
+      }
     } else {
       this.selectedClaim = null;
     }
@@ -186,6 +150,26 @@ export class AssessmentsComponent implements OnInit {
     });
   }
 
+  assignAdjusterBtn(): void {
+    if (!this.assessmentData.claimId || !this.assessmentData.adjusterId) {
+      alert('Please select a claim and enter an Adjuster User ID.');
+      return;
+    }
+    const claimId = Number(this.assessmentData.claimId);
+    const adjusterId = Number(this.assessmentData.adjusterId);
+
+    this.claimsService.assignAdjuster(claimId, adjusterId).subscribe({
+      next: () => {
+        this.showMessage(`Adjuster #${adjusterId} successfully assigned to Claim #${claimId}. Status updated to UNDER_REVIEW.`);
+        this.loadSubmittedClaims();
+      },
+      error: (err) => {
+        console.error('Failed to assign adjuster', err);
+        alert('Failed to assign adjuster.');
+      }
+    });
+  }
+
   approveClaim(): void {
     if (!this.assessmentData.claimId || !this.assessmentData.approvedAmount) {
       alert('Please select a Claim ID and enter the Approved Amount.');
@@ -198,9 +182,6 @@ export class AssessmentsComponent implements OnInit {
     const notes = this.assessmentData.notes || 'Claim inspected and approved according to policy terms.';
     const date = this.assessmentData.assessmentDate || new Date().toISOString().split('T')[0];
 
-    // Save status override locally
-    this.saveStatusOverride(claimId, 'APPROVED', adjusterId);
-
     const assessmentPayload: ClaimAssessment = {
       assessmentId: undefined,
       claimId: claimId,
@@ -210,23 +191,23 @@ export class AssessmentsComponent implements OnInit {
       assessmentDate: date
     };
 
-    // 1. Save Assessment
+    // 1. Save Assessment in Backend MySQL
     this.claimsService.createAssessment(assessmentPayload).subscribe({
-      next: (savedAssessment) => {
-        // 2. Approve Claim Status in Backend
+      next: () => {
+        // 2. Approve Claim Status in Backend MySQL
         this.claimsService.approveClaim(claimId).subscribe({
           next: () => {
-            this.saveStatusOverride(claimId, 'APPROVED', adjusterId);
-            // 3. Initiate Disbursement / Payout Recommendation
-            this.paymentsService.initiateDisbursement({
-              claimId: claimId,
-              payeeName: 'Policyholder',
-              amount: approvedAmount,
-              paymentMethod: 'Direct Bank Transfer',
-              status: 'PENDING'
-            }).subscribe();
+            const isAlreadyApproved = this.selectedClaim?.status === 'APPROVED' || this.selectedClaim?.status === 'SETTLED';
+            if (!isAlreadyApproved) {
+              this.paymentsService.initiateDisbursement({
+                claimId: claimId,
+                payeeName: 'Policyholder',
+                amount: approvedAmount,
+                paymentMethod: 'Direct Bank Transfer',
+                status: 'PENDING'
+              }).subscribe();
+            }
 
-            // 4. Trigger In-App Notification for Policyholder
             const notifMsg = `Claim #${claimId} has been APPROVED by Adjuster #${adjusterId}. Approved Amount: ₹${approvedAmount.toLocaleString()}`;
             this.notificationService.createNotification(1, notifMsg, 'Claim').subscribe();
 
@@ -236,15 +217,6 @@ export class AssessmentsComponent implements OnInit {
             this.loadAssessments();
           },
           error: () => {
-            this.saveStatusOverride(claimId, 'APPROVED', adjusterId);
-            this.paymentsService.initiateDisbursement({
-              claimId: claimId,
-              payeeName: 'Policyholder',
-              amount: approvedAmount,
-              paymentMethod: 'Direct Bank Transfer',
-              status: 'PENDING'
-            }).subscribe();
-
             this.showMessage(`✅ Claim #${claimId} APPROVED! Added to Payout Recommendations.`);
             this.clearForm();
             this.loadSubmittedClaims();
@@ -270,9 +242,6 @@ export class AssessmentsComponent implements OnInit {
     const reason = this.assessmentData.notes || 'Claim rejected after physical inspection.';
     const date = this.assessmentData.assessmentDate || new Date().toISOString().split('T')[0];
 
-    // Save status override locally
-    this.saveStatusOverride(claimId, 'REJECTED', adjusterId);
-
     const assessmentPayload: ClaimAssessment = {
       assessmentId: undefined,
       claimId: claimId,
@@ -282,13 +251,12 @@ export class AssessmentsComponent implements OnInit {
       assessmentDate: date
     };
 
-    // 1. Save Assessment
+    // 1. Save Assessment in Backend MySQL
     this.claimsService.createAssessment(assessmentPayload).subscribe({
-      next: (savedAssessment) => {
-        // 2. Reject Claim Status in Backend
+      next: () => {
+        // 2. Reject Claim Status in Backend MySQL
         this.claimsService.rejectClaim(claimId, reason).subscribe({
           next: () => {
-            this.saveStatusOverride(claimId, 'REJECTED', adjusterId);
             const notifMsg = `Claim #${claimId} has been REJECTED by Adjuster #${adjusterId}. Reason: ${reason}`;
             this.notificationService.createNotification(1, notifMsg, 'Claim').subscribe();
 
@@ -298,7 +266,6 @@ export class AssessmentsComponent implements OnInit {
             this.loadAssessments();
           },
           error: () => {
-            this.saveStatusOverride(claimId, 'REJECTED', adjusterId);
             this.showMessage(`❌ Claim #${claimId} REJECTED! Notification sent.`);
             this.clearForm();
             this.loadSubmittedClaims();

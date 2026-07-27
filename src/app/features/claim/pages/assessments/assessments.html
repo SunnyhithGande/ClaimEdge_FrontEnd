@@ -36,7 +36,10 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label font-weight-bold">Adjuster User ID</label>
-                    <input type="number" class="form-control" [(ngModel)]="assessmentData.adjusterId" placeholder="Adjuster User ID">
+                    <div class="input-group">
+                        <input type="number" class="form-control" [(ngModel)]="assessmentData.adjusterId" placeholder="Adjuster User ID" [disabled]="authService.getRole() !== 'ADMIN'">
+                        <button class="btn btn-outline-primary" type="button" *ngIf="authService.getRole() === 'ADMIN'" (click)="assignAdjusterBtn()">Assign Adjuster</button>
+                    </div>
                 </div>
             </div>
 

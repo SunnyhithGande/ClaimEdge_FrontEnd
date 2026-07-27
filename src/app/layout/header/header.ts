@@ -30,7 +30,9 @@ export class Header implements OnInit {
   }
 
   get userName(): string {
-    return this.authService.getUser()?.name || 'User';
+    const u = this.authService.getUser();
+    if (!u) return 'User';
+    return this.authService.getUserNameByEmail(u.email) || u.name || 'User';
   }
 
   toggleSidebar(): void {

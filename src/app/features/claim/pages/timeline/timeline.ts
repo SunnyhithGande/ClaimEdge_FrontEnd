@@ -24,45 +24,16 @@ export class TimelineComponent implements OnInit {
 
   private claimsService = inject(ClaimsService);
 
-  claimId: string = '3';
+  claimId: string = '1';
   claimDetails: any = null;
   timeline: string[] = [];
   errorMessage: string = '';
   loading = false;
 
-  private readonly OVERRIDES_KEY = 'claim_status_overrides';
-  private readonly CLAIMS_MASTER_KEY = 'claimedge_clean_claims_master_v12';
-
   flowchartSteps: FlowchartStep[] = [];
 
   ngOnInit(): void {
     this.loadTimeline();
-  }
-
-  getStatusOverrides(): { [key: number]: { status: string, adjusterId?: number } } {
-    try {
-      const stored = localStorage.getItem(this.OVERRIDES_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  }
-
-  getMasterClaims(): any[] {
-    try {
-      const stored = localStorage.getItem(this.CLAIMS_MASTER_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch {}
-
-    return [
-      { claimId: 1, policyId: 2, claimType: 'Vehicle Accident', incidentDate: '2026-07-20', claimAmount: 45000, assignedAdjusterId: 1, status: 'APPROVED' },
-      { claimId: 2, policyId: 1, claimType: 'Property Damage', incidentDate: '2026-07-25', claimAmount: 23444, assignedAdjusterId: null, status: 'SETTLED' },
-      { claimId: 3, policyId: 1, claimType: 'Vehicle Damage', incidentDate: '2026-07-25', claimAmount: 10000, assignedAdjusterId: null, status: 'SETTLED' },
-      { claimId: 4, policyId: 47, claimType: 'Life Benefit', incidentDate: '2026-07-25', claimAmount: 40000, assignedAdjusterId: null, status: 'SETTLED' },
-      { claimId: 5, policyId: 47, claimType: 'Medical Hospitalization', incidentDate: '2026-07-25', claimAmount: 6969, assignedAdjusterId: 69, status: 'SETTLED' }
-    ];
   }
 
   loadTimeline(): void {
@@ -85,19 +56,12 @@ export class TimelineComponent implements OnInit {
     }
 
     this.loading = true;
-    const overrides = this.getStatusOverrides();
-    const masterList = this.getMasterClaims();
 
-    // Check if claim exists in local master list
-    const foundMaster = masterList.find((c: any) => Number(c.claimId) === id);
-
+    // Fetch claim details directly from backend MySQL API
     this.claimsService.getClaimById(id).subscribe({
       next: (c: any) => {
         this.loading = false;
-        let activeStatus = c?.status || 'SUBMITTED';
-        if (overrides[id] && overrides[id].status) {
-          activeStatus = overrides[id].status;
-        }
+        const activeStatus = c?.status || 'SUBMITTED';
 
         this.claimDetails = {
           ...c,
@@ -108,25 +72,10 @@ export class TimelineComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        if (foundMaster) {
-          let activeStatus = foundMaster.status || 'SUBMITTED';
-          if (overrides[id] && overrides[id].status) {
-            activeStatus = overrides[id].status;
-          }
-
-          this.claimDetails = {
-            ...foundMaster,
-            status: activeStatus
-          };
-          this.buildFlowchart(activeStatus);
-          this.timeline = this.buildTimelineList(id, activeStatus);
-        } else {
-          // CLAIM DOES NOT EXIST IN SYSTEM
-          this.claimDetails = null;
-          this.flowchartSteps = [];
-          this.timeline = [];
-          this.errorMessage = `❌ Claim #${id} does not exist in the system. Please enter a valid Claim ID (e.g. 1, 2, 3, 4, 5).`;
-        }
+        this.claimDetails = null;
+        this.flowchartSteps = [];
+        this.timeline = [];
+        this.errorMessage = `❌ Claim #${id} does not exist in the system. Please enter a valid Claim ID.`;
       }
     });
   }

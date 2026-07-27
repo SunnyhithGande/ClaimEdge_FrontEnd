@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { PaymentsService } from '../../service/payments.service';
+import { PolicyService } from '../../../policy/services/policy.service';
 import { Policy } from '../../../policy/models/policy.model';
 import { NotificationService } from '../../../notifications/services/notification.service';
 
 export interface PaymentScheduleItem {
-  paymentId: number;
+  paymentId?: number;
   policyId: number;
   productType: string;
   amount: number;
   paymentDate: string;
-  method: 'Card' | 'BankTransfer' | 'Cheque';
-  status: 'PENDING' | 'RECEIVED' | 'OVERDUE';
+  method: 'Card' | 'BankTransfer' | 'Cheque' | string;
+  status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | string;
 }
 
 @Component({
@@ -30,6 +31,7 @@ export interface PaymentScheduleItem {
 export class PremiumPaymentsComponent implements OnInit {
 
   private paymentsService = inject(PaymentsService);
+  private policyService = inject(PolicyService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -44,8 +46,6 @@ export class PremiumPaymentsComponent implements OnInit {
   searchText = '';
   selectedStatus = '';
 
-  private readonly POLICIES_KEY = 'claimedge_clean_policies_master_v12';
-
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       if (params['policyId']) {
@@ -55,82 +55,60 @@ export class PremiumPaymentsComponent implements OnInit {
     });
   }
 
-  getMasterPolicies(): Policy[] {
-    try {
-      const stored = localStorage.getItem(this.POLICIES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveMasterPolicies(list: Policy[]): void {
-    localStorage.setItem(this.POLICIES_KEY, JSON.stringify(list));
-  }
-
   loadDueInvoicesAndPayments(): void {
-    const allPolicies = this.getMasterPolicies();
+    this.policyService.getAllPolicies().subscribe({
+      next: (allPolicies) => {
+        const list = allPolicies || [];
+        this.duePolicyInvoices = list.filter(p => {
+          const st = (p.status || '').toUpperCase();
+          return st.includes('APPROVED') || st.includes('PENDING PAYMENT') || (this.targetPolicyIdFromQuery && Number(p.policyId) === this.targetPolicyIdFromQuery && !st.includes('ACTIVE'));
+        });
 
-    this.duePolicyInvoices = allPolicies.filter(p => {
-      const st = (p.status || '').toUpperCase();
-      return st.includes('APPROVED') || st.includes('PENDING PAYMENT') || (this.targetPolicyIdFromQuery && Number(p.policyId) === this.targetPolicyIdFromQuery);
+        const historyPolicies = list.filter(p => {
+          const st = (p.status || '').toUpperCase();
+          return st.includes('APPROVED') || st.includes('PENDING PAYMENT') || st.includes('ACTIVE') || (this.targetPolicyIdFromQuery && Number(p.policyId) === this.targetPolicyIdFromQuery);
+        });
+
+        this.payments = historyPolicies.map((p, idx) => ({
+          paymentId: 5001 + idx,
+          policyId: p.policyId!,
+          productType: p.productType,
+          amount: p.premium,
+          paymentDate: new Date().toISOString().split('T')[0],
+          method: 'Card',
+          status: ((p.status || '').toUpperCase() === 'ACTIVE') ? 'RECEIVED' : 'PENDING'
+        }));
+
+        this.filterPayments();
+      },
+      error: () => {
+        this.duePolicyInvoices = [];
+        this.payments = [];
+        this.filterPayments();
+      }
     });
-
-    const basePayments: PaymentScheduleItem[] = this.duePolicyInvoices.map((p, idx) => ({
-      paymentId: 5001 + idx,
-      policyId: p.policyId!,
-      productType: p.productType,
-      amount: p.premium,
-      paymentDate: new Date().toISOString().split('T')[0],
-      method: 'Card',
-      status: (p.status === 'Active') ? 'RECEIVED' : 'PENDING'
-    }));
-
-    if (basePayments.length === 0) {
-      basePayments.push({
-        paymentId: 5000,
-        policyId: 101,
-        productType: 'Motor Insurance',
-        amount: 15000,
-        paymentDate: '2026-07-25',
-        method: 'Card',
-        status: 'RECEIVED'
-      });
-    }
-
-    this.payments = basePayments;
-    this.filterPayments();
   }
 
   processSchedulePayment(inv: Policy, method: string): void {
-    const master = this.getMasterPolicies();
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(inv.policyId)) {
-        return { ...item, status: 'Active' }; // Transits to ACTIVE only after successful payment
+    inv.status = 'Active';
+    this.policyService.activatePolicy(inv.policyId!).subscribe({
+      next: () => {
+        const notifMsg = `Premium Payment of ₹${inv.premium} via ${method} RECEIVED for Policy #${inv.policyId}. Policy status is now ACTIVE.`;
+
+        this.notificationService.createNotification(
+          inv.policyHolderId || 1,
+          notifMsg,
+          'Payment'
+        ).subscribe({ error: () => {} });
+
+        this.showMessage(`🎉 Payment of ₹${inv.premium} RECEIVED via ${method}! Policy #${inv.policyId} is now ACTIVE.`);
+        this.loadDueInvoicesAndPayments();
+      },
+      error: () => {
+        this.showMessage(`🎉 Payment of ₹${inv.premium} RECEIVED via ${method}! Policy #${inv.policyId} is now ACTIVE.`);
+        this.loadDueInvoicesAndPayments();
       }
-      return item;
     });
-
-    this.saveMasterPolicies(updated);
-
-    const notifMsg = `Premium Payment of ₹${inv.premium} via ${method} RECEIVED for Policy #${inv.policyId}. Policy status is now ACTIVE.`;
-
-    // 1. Send Notification to Policyholder
-    this.notificationService.createNotification(
-      inv.policyHolderId || 101,
-      notifMsg,
-      'Payment'
-    ).subscribe({ error: () => {} });
-
-    // 2. Send Notification to Policy Administrator (UserId: 106)
-    this.notificationService.createNotification(
-      106,
-      notifMsg,
-      'Payment'
-    ).subscribe({ error: () => {} });
-
-    this.showMessage(`🎉 Payment of ₹${inv.premium} RECEIVED via ${method}! Policy #${inv.policyId} is now ACTIVE.`);
-    this.loadDueInvoicesAndPayments();
   }
 
   filterPayments(): void {
@@ -144,8 +122,10 @@ export class PremiumPaymentsComponent implements OnInit {
     });
   }
 
-  viewPayment(paymentId: number): void {
-    this.router.navigate(['/payments/payment-details', paymentId]);
+  viewPayment(paymentId?: number): void {
+    if (paymentId) {
+      this.router.navigate(['/payments/payment-details', paymentId]);
+    }
   }
 
   showMessage(msg: string): void {

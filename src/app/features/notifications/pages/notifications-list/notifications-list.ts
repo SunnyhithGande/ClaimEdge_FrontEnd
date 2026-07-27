@@ -36,16 +36,12 @@ export class NotificationsListComponent implements OnInit {
     this.service.getNotificationsByUser(userId).subscribe({
       next: (data) => {
         let list = data || [];
-        // Ensure sorted by recent date & time (latest notification first)
         list.sort((a, b) => new Date(b.createdDate || 0).getTime() - new Date(a.createdDate || 0).getTime());
         this.notifications = list;
         this.applyFilters();
       },
       error: () => {
-        const master = this.service.getMasterNotifications();
-        let list = master.filter(n => Number(n.userId) === Number(userId));
-        list.sort((a, b) => new Date(b.createdDate || 0).getTime() - new Date(a.createdDate || 0).getTime());
-        this.notifications = list;
+        this.notifications = [];
         this.applyFilters();
       }
     });

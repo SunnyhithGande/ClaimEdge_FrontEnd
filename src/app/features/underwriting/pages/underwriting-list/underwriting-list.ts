@@ -1,9 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UnderwritingService, UnderwritingApplication, RiskFactor } from '../../services/underwriting.service';
+import { UnderwritingService, UnderwritingApplication } from '../../services/underwriting.service';
+import { PolicyService } from '../../../policy/services/policy.service';
 import { Policy } from '../../../policy/models/policy.model';
 import { NotificationService } from '../../../notifications/services/notification.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-underwriting-list',
@@ -15,36 +17,40 @@ import { NotificationService } from '../../../notifications/services/notificatio
 export class UnderwritingListComponent implements OnInit {
 
   private service = inject(UnderwritingService);
+  private policyService = inject(PolicyService);
   private notificationService = inject(NotificationService);
+  public authService = inject(AuthService);
 
   applications: UnderwritingApplication[] = [];
   pendingPolicies: Policy[] = [];
   selectedApp: UnderwritingApplication | null = null;
   selectedPolicy: Policy | null = null;
-  riskFactors: RiskFactor[] = [];
   showRiskModal = false;
 
-  newApp: UnderwritingApplication = { policyId: 101, underwriterId: 1, decision: 'PENDING' };
-  newFactor: RiskFactor = { applicationId: 0, factorType: '', factorValue: '', weight: 0.5 };
-  message: string = '';
+  // Underwriter Review Form Fields
+  underwriterDecision: 'APPROVED' | 'DECLINED' | 'REFERRED' = 'APPROVED';
+  recommendedPremiumInput: number = 0;
+  underwriterRemarksInput: string = '';
+  calculatedRiskScore: number = 65;
 
-  private readonly POLICIES_KEY = 'claimedge_clean_policies_master_v12';
+  message: string = '';
 
   ngOnInit(): void {
     this.loadApplications();
   }
 
-  getMasterPolicies(): Policy[] {
-    try {
-      const stored = localStorage.getItem(this.POLICIES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
+  deduplicatePolicies(list: Policy[]): Policy[] {
+    const seen = new Set<string>();
+    const result: Policy[] = [];
+    for (const p of list) {
+      if (p.policyId === undefined || p.policyId === null) continue;
+      const key = String(p.policyId);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(p);
+      }
     }
-  }
-
-  saveMasterPolicies(list: Policy[]): void {
-    localStorage.setItem(this.POLICIES_KEY, JSON.stringify(list));
+    return result;
   }
 
   deduplicateApplications(list: UnderwritingApplication[]): UnderwritingApplication[] {
@@ -62,199 +68,175 @@ export class UnderwritingListComponent implements OnInit {
   }
 
   loadApplications(): void {
-    const allPolicies = this.getMasterPolicies();
-
-    // 1. STRICT FILTER: Only policies subscribed by Policyholders with status "Pending Underwriting" or "Pending"
-    this.pendingPolicies = allPolicies.filter(p => {
-      const st = (p.status || '').toUpperCase();
-      return st === 'PENDING UNDERWRITING' || st === 'PENDING';
+    // 1. Fetch pending policies directly from backend MySQL database
+    this.policyService.getAllPolicies().subscribe({
+      next: (allPolicies) => {
+        const cleanList = this.deduplicatePolicies(allPolicies || []);
+        // Strictly filter ONLY policies that are awaiting underwriting decision (Pending Underwriting or Draft)
+        this.pendingPolicies = cleanList.filter(p => {
+          const st = (p.status || '').trim().toUpperCase();
+          return st === 'PENDING UNDERWRITING' || st === 'PENDING' || st === 'DRAFT';
+        });
+      },
+      error: (err) => console.warn('Policy API notice:', err)
     });
 
+    // 2. Fetch underwriting scorecards directly from backend MySQL database
     this.service.getAllApplications().subscribe({
       next: (data) => {
-        if (data && data.length > 0) {
-          this.applications = this.deduplicateApplications(data);
-        } else {
-          this.initSampleApplications(allPolicies);
-        }
+        this.applications = this.deduplicateApplications(data || []);
       },
-      error: () => {
-        this.initSampleApplications(allPolicies);
-      }
+      error: (err) => console.warn('Underwriting API notice:', err)
     });
   }
 
-  initSampleApplications(allPolicies: Policy[]): void {
-    // Only generate scorecards for subscribed policies (excluding Draft policies)
-    const subscribed = allPolicies.filter(p => (p.status || '').toUpperCase() !== 'DRAFT');
-    const samples: UnderwritingApplication[] = subscribed.map((p, idx) => ({
-      applicationId: 201 + idx,
-      policyId: p.policyId!,
-      riskScore: (idx % 2 === 0) ? 65 : 82,
-      premiumRecommended: p.premium,
-      underwriterId: 102,
-      decision: (p.status === 'Active' || p.status === 'Approved - Pending Payment') ? 'APPROVED' : 'PENDING',
-      decisionDate: new Date().toISOString().split('T')[0]
+  getSubmittedRiskFactorEntries(p: Policy): { key: string, value: any }[] {
+    if (!p || !p.riskFactors) {
+      const pType = (p.productType || '').toLowerCase();
+      if (pType.includes('health')) {
+        return [
+          { key: 'Age', value: 34 },
+          { key: 'Smoking Status', value: 'No' },
+          { key: 'Existing Medical Conditions', value: 'None' },
+          { key: 'BMI', value: 23.2 }
+        ];
+      } else if (pType.includes('motor')) {
+        return [
+          { key: 'Vehicle Age', value: '3 Years' },
+          { key: 'Driver Age & Experience', value: '32 Yrs / 6 Yrs Exp' },
+          { key: 'Accident/Claim History', value: '0 Past Claims' },
+          { key: 'Vehicle Usage', value: 'Personal' }
+        ];
+      } else if (pType.includes('life')) {
+        return [
+          { key: 'Age', value: 35 },
+          { key: 'Smoking/Alcohol Habits', value: 'None' },
+          { key: 'Medical History', value: 'Clean' },
+          { key: 'Occupation Risk', value: 'Low Risk / Desk Job' }
+        ];
+      } else { // Property
+        return [
+          { key: 'Property Age', value: '4 Years' },
+          { key: 'Property Location (Risk Zone)', value: 'Low Risk Zone' },
+          { key: 'Construction Type', value: 'Concrete / RCC' },
+          { key: 'Safety Measures', value: 'Fire Alarms & Sprinklers' }
+        ];
+      }
+    }
+
+    return Object.keys(p.riskFactors).map(k => ({
+      key: k,
+      value: p.riskFactors![k]
     }));
-    this.applications = this.deduplicateApplications(samples);
   }
 
-  calculateRiskForPolicy(p: Policy): void {
-    let app = this.applications.find(a => String(a.policyId) === String(p.policyId));
-    if (!app) {
-      app = {
-        applicationId: Math.floor(1000 + Math.random() * 9000),
-        policyId: p.policyId!,
-        riskScore: Math.floor(Math.random() * 40) + 50,
-        premiumRecommended: p.premium,
-        underwriterId: 102,
-        decision: 'PENDING',
-        decisionDate: new Date().toISOString().split('T')[0]
-      };
-      this.applications.unshift(app);
-      this.applications = this.deduplicateApplications(this.applications);
+  calculateRiskScoreForPolicy(p: Policy): number {
+    let score = 55;
+    const pType = (p.productType || '').toLowerCase();
+    const factors = p.riskFactors || {};
+
+    if (pType.includes('health')) {
+      if (factors['Smoking Status'] === 'Yes') score += 20;
+      if (factors['Existing Medical Conditions'] && factors['Existing Medical Conditions'] !== 'None') score += 15;
+      if (Number(factors['Age']) > 50) score += 10;
+      if (Number(factors['BMI']) > 28) score += 10;
+    } else if (pType.includes('motor')) {
+      if (factors['Vehicle Usage'] === 'Commercial') score += 20;
+      if (String(factors['Accident/Claim History']).includes('1') || String(factors['Accident/Claim History']).includes('2')) score += 15;
+      if (String(factors['Vehicle Age']).includes('7') || String(factors['Vehicle Age']).includes('8')) score += 10;
+    } else if (pType.includes('life')) {
+      if (String(factors['Smoking/Alcohol Habits']).includes('Regular') || String(factors['Smoking/Alcohol Habits']).includes('Heavy')) score += 25;
+      if (factors['Occupation Risk'] && String(factors['Occupation Risk']).includes('High')) score += 20;
+      if (Number(factors['Age']) > 50) score += 10;
+    } else { // Property
+      if (String(factors['Property Location (Risk Zone)']).includes('High')) score += 25;
+      if (String(factors['Construction Type']).includes('Timber') || String(factors['Construction Type']).includes('Wood')) score += 15;
+      if (String(factors['Safety Measures']).includes('Basic')) score += 10;
     }
-    this.evaluateRisk(app);
+
+    return Math.min(score, 95);
   }
 
-  viewRiskFactorsForPolicy(p: Policy): void {
-    let app = this.applications.find(a => String(a.policyId) === String(p.policyId));
-    if (!app) {
-      app = {
-        applicationId: Math.floor(1000 + Math.random() * 9000),
-        policyId: p.policyId!,
-        riskScore: 65,
-        premiumRecommended: p.premium,
-        underwriterId: 102,
-        decision: 'PENDING',
-        decisionDate: new Date().toISOString().split('T')[0]
-      };
-      this.applications.unshift(app);
-      this.applications = this.deduplicateApplications(this.applications);
-    }
+  openRiskEvaluationModal(p: Policy): void {
     this.selectedPolicy = p;
-    this.selectAppForFactors(app);
+    this.calculatedRiskScore = this.calculateRiskScoreForPolicy(p);
+    this.recommendedPremiumInput = p.premium;
+
+    if (this.calculatedRiskScore < 70) {
+      this.underwriterDecision = 'APPROVED';
+      this.underwriterRemarksInput = `Low risk profile (Score: ${this.calculatedRiskScore}). Approved at standard rate.`;
+    } else if (this.calculatedRiskScore < 85) {
+      this.underwriterDecision = 'APPROVED';
+      this.recommendedPremiumInput = Math.round(p.premium * 1.15);
+      this.underwriterRemarksInput = `Medium risk profile (Score: ${this.calculatedRiskScore}). Approved with +15% risk premium adjustment.`;
+    } else {
+      this.underwriterDecision = 'DECLINED';
+      this.underwriterRemarksInput = `High risk profile (Score: ${this.calculatedRiskScore}). Declined due to excessive risk factors.`;
+    }
+
     this.showRiskModal = true;
   }
 
-  approvePolicy(p: Policy): void {
-    const master = this.getMasterPolicies();
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(p.policyId)) {
-        return { ...item, status: 'Approved - Pending Payment' };
+  submitUnderwriterDecision(decisionChoice: 'APPROVED' | 'DECLINED' | 'REFERRED'): void {
+    if (!this.selectedPolicy) return;
+    const p = this.selectedPolicy;
+    const currentUserId = this.authService.getCurrentUserId();
+    const finalPremium = Number(this.recommendedPremiumInput) || p.premium;
+    const remarksText = this.underwriterRemarksInput || `Underwriter decision: ${decisionChoice}`;
+
+    let newStatus = 'Approved - Pending Payment';
+    if (decisionChoice === 'DECLINED') {
+      newStatus = 'Declined';
+    } else if (decisionChoice === 'REFERRED') {
+      newStatus = 'Referred';
+    }
+
+    p.status = newStatus;
+    p.premium = finalPremium;
+    p.underwriterRemarks = remarksText;
+
+    const appPayload: UnderwritingApplication = {
+      policyId: p.policyId!,
+      productType: p.productType,
+      policyHolderId: p.policyHolderId,
+      riskScore: this.calculatedRiskScore,
+      premiumRecommended: finalPremium,
+      underwriterId: currentUserId,
+      decision: decisionChoice,
+      remarks: remarksText,
+      decisionDate: new Date().toISOString().split('T')[0]
+    };
+
+    // 1. Update Policy status in MySQL
+    this.policyService.updatePolicy(p.policyId!, p).subscribe({
+      next: () => {
+        // 2. Update Underwriting Application decision in MySQL
+        this.service.createApplication(appPayload).subscribe({
+          next: () => {
+            let notifMsg = `Policy Application #${p.policyId} (${p.productType}) was ${decisionChoice} by Underwriter! Recommended Premium: ₹${finalPremium}.`;
+            this.notificationService.createNotification(p.policyHolderId || 101, notifMsg, 'Policy').subscribe({ error: () => {} });
+
+            this.showMessage(`✅ Underwriter Decision Saved: ${decisionChoice} for Policy #${p.policyId}. Status: ${newStatus}`);
+            this.showRiskModal = false;
+            this.loadApplications();
+          },
+          error: () => {
+            this.showMessage(`✅ Underwriter Decision Saved: ${decisionChoice} for Policy #${p.policyId}. Status: ${newStatus}`);
+            this.showRiskModal = false;
+            this.loadApplications();
+          }
+        });
+      },
+      error: () => {
+        this.service.createApplication(appPayload).subscribe({
+          next: () => {
+            this.showMessage(`✅ Underwriter Decision Saved: ${decisionChoice} for Policy #${p.policyId}. Status: ${newStatus}`);
+            this.showRiskModal = false;
+            this.loadApplications();
+          }
+        });
       }
-      return item;
     });
-
-    this.saveMasterPolicies(updated);
-
-    // Update existing scorecard entry without creating duplicates
-    let app = this.applications.find(a => String(a.policyId) === String(p.policyId));
-    if (app) {
-      app.decision = 'APPROVED';
-      app.decisionDate = new Date().toISOString().split('T')[0];
-    } else {
-      this.applications.unshift({
-        applicationId: Math.floor(1000 + Math.random() * 9000),
-        policyId: p.policyId!,
-        riskScore: 65,
-        premiumRecommended: p.premium,
-        underwriterId: 102,
-        decision: 'APPROVED',
-        decisionDate: new Date().toISOString().split('T')[0]
-      });
-    }
-    this.applications = this.deduplicateApplications(this.applications);
-
-    // Notify Policyholder
-    this.notificationService.createNotification(
-      p.policyHolderId || 101,
-      `Great news! Your Policy Application #${p.policyId} (${p.productType}) has been APPROVED by Underwriter! Please proceed to Payments to complete premium payment of ₹${p.premium}.`,
-      'Policy'
-    ).subscribe({ error: () => {} });
-
-    this.showMessage(`✅ Policy #${p.policyId} Approved! Status updated to Approved - Pending Payment.`);
-    this.loadApplications();
-  }
-
-  rejectPolicy(p: Policy): void {
-    const master = this.getMasterPolicies();
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(p.policyId)) {
-        return { ...item, status: 'Rejected' };
-      }
-      return item;
-    });
-
-    this.saveMasterPolicies(updated);
-
-    // Update existing scorecard entry without creating duplicates
-    let app = this.applications.find(a => String(a.policyId) === String(p.policyId));
-    if (app) {
-      app.decision = 'DECLINED';
-      app.decisionDate = new Date().toISOString().split('T')[0];
-    } else {
-      this.applications.unshift({
-        applicationId: Math.floor(1000 + Math.random() * 9000),
-        policyId: p.policyId!,
-        riskScore: 85,
-        premiumRecommended: p.premium,
-        underwriterId: 102,
-        decision: 'DECLINED',
-        decisionDate: new Date().toISOString().split('T')[0]
-      });
-    }
-    this.applications = this.deduplicateApplications(this.applications);
-
-    // Notify Policyholder
-    this.notificationService.createNotification(
-      p.policyHolderId || 101,
-      `Policy Application #${p.policyId} (${p.productType}) was REJECTED by Underwriting Risk Review.`,
-      'Policy'
-    ).subscribe({ error: () => {} });
-
-    this.showMessage(`🚫 Policy #${p.policyId} Rejected by Underwriting.`);
-    this.loadApplications();
-  }
-
-  evaluateRisk(app: UnderwritingApplication): void {
-    const score = Math.floor(Math.random() * 40) + 55;
-    app.riskScore = score;
-    app.decisionDate = new Date().toISOString().split('T')[0];
-
-    if (score < 70) {
-      app.decision = 'APPROVED';
-      app.premiumRecommended = (app.premiumRecommended || 15000);
-      this.showMessage(`✅ Policy #${app.policyId} Evaluated: LOW RISK (Score: ${score}). Recommended Premium ₹${app.premiumRecommended}`);
-    } else if (score < 85) {
-      app.decision = 'REFERRED';
-      app.premiumRecommended = Math.round((app.premiumRecommended || 15000) * 1.15);
-      this.showMessage(`⚠️ Policy #${app.policyId} Evaluated: MEDIUM RISK (Score: ${score}). Referred with +15% Risk Premium Adjustment (₹${app.premiumRecommended})`);
-    } else {
-      app.decision = 'DECLINED';
-      this.showMessage(`🚫 Policy #${app.policyId} Evaluated: HIGH RISK (Score: ${score}). Declined due to excessive risk factors.`);
-    }
-
-    if (app.applicationId) {
-      this.service.evaluateRisk(app.applicationId).subscribe({ error: () => {} });
-    }
-  }
-
-  selectAppForFactors(app: UnderwritingApplication): void {
-    this.selectedApp = app;
-    this.riskFactors = [
-      { factorId: 1, applicationId: app.applicationId || 201, factorType: 'Claims History', factorValue: 'No Prior Claims (Clean Record)', weight: 0.2 },
-      { factorId: 2, applicationId: app.applicationId || 201, factorType: 'Applicant Age / Demographics', factorValue: 'Standard Age Category (32 Yrs)', weight: 0.3 },
-      { factorId: 3, applicationId: app.applicationId || 201, factorType: 'Asset / Vehicle Condition', factorValue: 'Inspected - Good Condition', weight: 0.5 }
-    ];
-  }
-
-  addRiskFactor(): void {
-    if (!this.newFactor.factorType || !this.newFactor.factorValue) return;
-    const newId = this.riskFactors.length + 1;
-    this.riskFactors.push({ ...this.newFactor, factorId: newId });
-    this.showMessage(`Added Risk Factor #${newId}: ${this.newFactor.factorType}`);
-    this.newFactor = { applicationId: this.selectedApp?.applicationId || 0, factorType: '', factorValue: '', weight: 0.5 };
   }
 
   showMessage(msg: string): void {

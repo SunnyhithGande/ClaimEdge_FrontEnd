@@ -7,4 +7,7 @@ export interface Policy {
   startDate: string;
   endDate: string;
   status?: string;
+  riskScore?: number;
+  underwriterRemarks?: string;
+  riskFactors?: { [key: string]: any };
 }

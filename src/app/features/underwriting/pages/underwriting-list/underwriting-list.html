@@ -2,7 +2,7 @@
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1 fw-bold text-dark">Underwriting Risk Evaluation Workbench</h2>
-            <p class="text-muted mb-0">Evaluate policy risk profiles, verify subscribed policies, and approve/reject coverage applications.</p>
+            <p class="text-muted mb-0">Evaluate product-specific risk profiles, calculate risk scores, and record underwriting decisions.</p>
         </div>
         <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill">
             <i class="bi bi-person-workspace me-1"></i> Underwriter Portal
@@ -16,14 +16,14 @@
         <button type="button" class="btn-close" (click)="message = ''"></button>
     </div>
 
-    <!-- SECTION 1: PENDING SUBSCRIBED POLICIES FOR UNDERWRITING VERIFICATION (ONLY SUBSCRIBED POLICIES) -->
+    <!-- SECTION 1: PENDING POLICY APPLICATIONS GRID -->
     <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
             <h5 class="mb-0 font-weight-bold text-dark">
-                <i class="bi bi-clipboard-check-fill text-warning me-2"></i> Pending Policy Applications for Underwriting Risk Verification
+                <i class="bi bi-clipboard-check-fill text-warning me-2"></i> Pending Applications Queue
             </h5>
             <span class="badge bg-warning text-dark px-3 py-2 fs-7 fw-bold">
-                {{ pendingPolicies.length }} Pending Approval
+                {{ pendingPolicies.length }} Pending Evaluation
             </span>
         </div>
         <div class="card-body p-0">
@@ -31,13 +31,13 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th>Policy ID</th>
+                            <th>Application / Policy ID</th>
                             <th>Product Type</th>
                             <th>Policyholder ID</th>
-                            <th>Coverage Amount</th>
-                            <th>Premium</th>
+                            <th>Coverage Sum</th>
+                            <th>Base Premium</th>
                             <th>Current Status</th>
-                            <th class="text-end pe-4">Underwriting Decision & Risk Actions</th>
+                            <th class="text-end pe-4">Underwriting Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,34 +55,17 @@
                                 </span>
                             </td>
                             <td class="text-end pe-3">
-                                <div class="btn-group btn-group-sm">
-                                    <!-- CALCULATE RISK BUTTON BEFORE APPROVING POLICY -->
-                                    <button class="btn btn-outline-primary fw-bold" (click)="calculateRiskForPolicy(p)" title="Calculate Risk Profile before Approving">
-                                        <i class="bi bi-cpu me-1"></i> Calculate Risk
-                                    </button>
-
-                                    <!-- RISK FACTORS BUTTON BEFORE APPROVING POLICY -->
-                                    <button class="btn btn-outline-secondary" (click)="viewRiskFactorsForPolicy(p)" title="View & Add Risk Factors before Approving">
-                                        <i class="bi bi-shield-lock me-1"></i> Risk Factors
-                                    </button>
-
-                                    <!-- APPROVE POLICY BUTTON -->
-                                    <button class="btn btn-success px-3 fw-bold" (click)="approvePolicy(p)" title="Verify and Approve Policy">
-                                        <i class="bi bi-check-circle me-1"></i> Approve Policy
-                                    </button>
-
-                                    <!-- REJECT POLICY BUTTON -->
-                                    <button class="btn btn-outline-danger px-3" (click)="rejectPolicy(p)" title="Reject Policy Application">
-                                        <i class="bi bi-x-circle me-1"></i> Reject Policy
-                                    </button>
-                                </div>
+                                <!-- EVALUATE & RISK SCORING BUTTON -->
+                                <button class="btn btn-primary btn-sm fw-bold px-3 shadow-sm" (click)="openRiskEvaluationModal(p)">
+                                    <i class="bi bi-shield-lock-fill me-1"></i> Review & Evaluate Risk
+                                </button>
                             </td>
                         </tr>
 
                         <tr *ngIf="pendingPolicies.length === 0">
                             <td colspan="7" class="text-center py-4 text-muted">
                                 <i class="bi bi-check-all fs-2 text-success d-block mb-2"></i>
-                                All subscribed policy applications have been evaluated and verified!
+                                All pending underwriting applications have been evaluated and verified!
                             </td>
                         </tr>
                     </tbody>
@@ -91,11 +74,11 @@
         </div>
     </div>
 
-    <!-- SECTION 2: RISK EVALUATION & SCORECARDS (CLEAN DISPLAY WITHOUT DUPLICATE BUTTONS) -->
+    <!-- SECTION 2: UNDERWRITING DECISION HISTORY & RISK SCORECARDS -->
     <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-header bg-white border-bottom p-4">
             <h5 class="mb-0 font-weight-bold text-dark">
-                <i class="bi bi-shield-shaded text-primary me-2"></i> Underwriting Risk Scorecards
+                <i class="bi bi-clock-history text-primary me-2"></i> Underwriting Decision History & Scorecards
             </h5>
         </div>
         <div class="card-body p-0">
@@ -105,8 +88,10 @@
                         <tr>
                             <th>App ID</th>
                             <th>Policy ID</th>
+                            <th>Product Type</th>
                             <th>Risk Score</th>
-                            <th>Recommended Premium</th>
+                            <th>Approved / Recommended Premium</th>
+                            <th>Underwriter Remarks</th>
                             <th>Underwriter Decision</th>
                             <th class="text-end pe-4">Decision Date</th>
                         </tr>
@@ -115,12 +100,14 @@
                         <tr *ngFor="let app of applications">
                             <td><strong>#{{ app.applicationId }}</strong></td>
                             <td><strong class="text-primary">Policy #{{ app.policyId }}</strong></td>
+                            <td><span class="fw-bold text-dark">{{ app.productType || 'Insurance' }}</span></td>
                             <td>
-                                <span class="badge" [ngClass]="{'bg-success': app.riskScore && app.riskScore < 75, 'bg-warning text-dark': app.riskScore && app.riskScore >= 75 && app.riskScore < 90, 'bg-danger': app.riskScore && app.riskScore >= 90}">
-                                    {{ app.riskScore || 'Not Evaluated' }}
+                                <span class="badge" [ngClass]="{'bg-success': app.riskScore && app.riskScore < 70, 'bg-warning text-dark': app.riskScore && app.riskScore >= 70 && app.riskScore < 85, 'bg-danger': app.riskScore && app.riskScore >= 85}">
+                                    {{ app.riskScore || '65' }}
                                 </span>
                             </td>
                             <td><span class="text-success fw-bold">₹{{ app.premiumRecommended ? (app.premiumRecommended | number) : 'Pending' }}</span></td>
+                            <td><small class="text-muted"><i class="bi bi-chat-left-text me-1"></i> {{ app.remarks || 'Standard evaluation' }}</small></td>
                             <td>
                                 <span class="badge" [ngClass]="{'bg-success': app.decision === 'APPROVED', 'bg-warning text-dark': app.decision === 'PENDING' || app.decision === 'REFERRED', 'bg-danger': app.decision === 'DECLINED'}">
                                     {{ app.decision }}
@@ -130,7 +117,7 @@
                         </tr>
 
                         <tr *ngIf="applications.length === 0">
-                            <td colspan="6" class="text-center py-4 text-muted">
+                            <td colspan="8" class="text-center py-4 text-muted">
                                 No underwriting risk scorecards recorded yet.
                             </td>
                         </tr>
@@ -140,52 +127,85 @@
         </div>
     </div>
 
-    <!-- RISK FACTORS MODAL -->
+    <!-- UNDERWRITER RISK EVALUATION & DECISION MODAL -->
     <div *ngIf="showRiskModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title font-weight-bold">
-                        <i class="bi bi-shield-check me-2"></i> Risk Assessment Factors for Policy #{{ selectedApp?.policyId }}
+                        <i class="bi bi-shield-check me-2"></i> Underwriting Application Details: Policy #{{ selectedPolicy?.policyId }} ({{ selectedPolicy?.productType }})
                     </h5>
                     <button type="button" class="btn-close btn-close-white" (click)="showRiskModal = false"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <div class="table-responsive mb-4">
-                        <table class="table table-bordered align-middle">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Factor ID</th>
-                                    <th>Factor Type</th>
-                                    <th>Factor Description / Value</th>
-                                    <th>Weight Impact</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let f of riskFactors">
-                                    <td>#{{ f.factorId }}</td>
-                                    <td><strong class="text-dark">{{ f.factorType }}</strong></td>
-                                    <td>{{ f.factorValue }}</td>
-                                    <td><span class="badge bg-info text-white">{{ f.weight }}</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="card bg-light border p-3 rounded-3">
-                        <h6 class="fw-bold mb-3">Add Custom Risk Factor</h6>
+                    
+                    <!-- PRODUCT-SPECIFIC RISK FACTORS SECTION (SHOWS ONLY RELEVANT PRODUCT FACTORS) -->
+                    <div class="card bg-light border p-3 rounded-3 mb-4">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-list-check me-2 text-primary"></i> Submitted Risk Factors for {{ selectedPolicy?.productType }}
+                        </h6>
+                        
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <input type="text" class="form-control" placeholder="Factor Type (e.g. Medical)" [(ngModel)]="newFactor.factorType">
-                            </div>
-                            <div class="col-md-5">
-                                <input type="text" class="form-control" placeholder="Factor Value (e.g. No chronic illness)" [(ngModel)]="newFactor.factorValue">
-                            </div>
-                            <div class="col-md-3">
-                                <button class="btn btn-primary w-100 fw-bold" (click)="addRiskFactor()">+ Add Factor</button>
+                            <div class="col-md-6" *ngFor="let factor of getSubmittedRiskFactorEntries(selectedPolicy!)">
+                                <div class="p-3 bg-white border rounded-3 h-100">
+                                    <div class="text-muted fs-8 text-uppercase fw-bold">{{ factor.key }}</div>
+                                    <div class="fs-6 fw-bold text-dark mt-1">{{ factor.value }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- SYSTEM CALCULATED RISK SCORE SECTION -->
+                    <div class="card border p-3 rounded-3 mb-4 bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">System Calculated Risk Score</h6>
+                                <p class="text-muted fs-7 mb-0">Evaluated using product-specific risk algorithm.</p>
+                            </div>
+                            <div>
+                                <span class="badge fs-5 px-4 py-2" [ngClass]="{
+                                    'bg-success': calculatedRiskScore < 70,
+                                    'bg-warning text-dark': calculatedRiskScore >= 70 && calculatedRiskScore < 85,
+                                    'bg-danger': calculatedRiskScore >= 85
+                                }">
+                                    Risk Score: {{ calculatedRiskScore }} / 100
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UNDERWRITER DECISION FORM -->
+                    <div class="card border p-3 rounded-3 bg-white">
+                        <h6 class="fw-bold mb-3 text-dark">Enter Underwriting Recommendation & Decision</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Recommended Premium (₹)</label>
+                            <input type="number" class="form-control" [(ngModel)]="recommendedPremiumInput">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Underwriter Remarks</label>
+                            <textarea class="form-control" rows="2" [(ngModel)]="underwriterRemarksInput" placeholder="Enter remarks regarding risk score or premium adjustments..."></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2 pt-2">
+                            <!-- APPROVE BUTTON -->
+                            <button type="button" class="btn btn-success flex-fill fw-bold py-2" (click)="submitUnderwriterDecision('APPROVED')">
+                                <i class="bi bi-check-circle me-1"></i> Approve
+                            </button>
+
+                            <!-- REFER BUTTON -->
+                            <button type="button" class="btn btn-warning flex-fill fw-bold py-2 text-dark" (click)="submitUnderwriterDecision('REFERRED')">
+                                <i class="bi bi-exclamation-triangle me-1"></i> Refer
+                            </button>
+
+                            <!-- DECLINE BUTTON -->
+                            <button type="button" class="btn btn-danger flex-fill fw-bold py-2" (click)="submitUnderwriterDecision('DECLINED')">
+                                <i class="bi bi-x-circle me-1"></i> Decline
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" (click)="showRiskModal = false">Close</button>

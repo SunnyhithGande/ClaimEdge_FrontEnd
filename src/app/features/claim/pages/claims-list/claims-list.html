@@ -37,7 +37,6 @@
                             <th>Amount</th>
                             <th>Adjuster ID</th>
                             <th>Status</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,9 +54,9 @@
                                 <span class="badge bg-secondary" *ngIf="claim.assignedAdjusterId">
                                     {{ claim.assignedAdjusterId }}
                                 </span>
-                                <button class="btn btn-sm btn-link text-decoration-none" *ngIf="!claim.assignedAdjusterId && (authService.getRole() === 'ADJUSTER' || authService.getRole() === 'ADMIN')" (click)="assignAdjuster(claim.claimId)">
-                                    Assign
-                                </button>
+                                <span class="text-muted fs-7" *ngIf="!claim.assignedAdjusterId">
+                                    Unassigned
+                                </span>
                             </td>
                             <td>
                                 <span class="status-badge" [ngClass]="{
@@ -69,27 +68,10 @@
                                 }">
                                     {{ claim.status }}
                                 </span>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="action-btn view-btn" (click)="viewClaim(claim.claimId)" title="View Claim Details">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-outline-success" *ngIf="(authService.getRole() === 'ADJUSTER' || authService.getRole() === 'ADMIN') && claim.status !== 'APPROVED' && claim.status !== 'SETTLED'" (click)="approveClaim(claim.claimId)" title="Approve Claim">
-                                        <i class="bi bi-check-lg"></i> Approve
-                                    </button>
-                                    <button class="btn btn-outline-danger" *ngIf="(authService.getRole() === 'ADJUSTER' || authService.getRole() === 'ADMIN') && claim.status !== 'REJECTED' && claim.status !== 'SETTLED'" (click)="rejectClaim(claim.claimId)" title="Reject Claim">
-                                        <i class="bi bi-x-lg"></i> Reject
-                                    </button>
-                                    <button class="btn btn-outline-primary" *ngIf="(authService.getRole() === 'ADJUSTER' || authService.getRole() === 'ADMIN') && claim.status === 'APPROVED'" (click)="settleClaim(claim.claimId)" title="Mark Settled">
-                                        <i class="bi bi-cash-stack"></i> Settle
-                                    </button>
-                                </div>
-                            </td>
                         </tr>
 
                         <tr *ngIf="claims.length === 0">
-                            <td colspan="8" class="text-center py-4 text-muted">No Claims Found. Click "Submit Claim" to file a claim.</td>
+                            <td colspan="7" class="text-center py-4 text-muted">No Claims Found. Click "Submit Claim" to file a claim.</td>
                         </tr>
                     </tbody>
                 </table>

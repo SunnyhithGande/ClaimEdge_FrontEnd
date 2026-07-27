@@ -6,11 +6,15 @@ import { environment } from '../../../../environments/environment';
 export interface UnderwritingApplication {
   applicationId?: number;
   policyId: number;
+  productType?: string;
+  policyHolderId?: number;
   riskScore?: number;
   premiumRecommended?: number;
   underwriterId?: number;
   decision?: 'APPROVED' | 'DECLINED' | 'REFERRED' | 'PENDING';
+  remarks?: string;
   decisionDate?: string;
+  submittedDate?: string;
 }
 
 export interface RiskFactor {
@@ -18,7 +22,7 @@ export interface RiskFactor {
   applicationId: number;
   factorType: string;
   factorValue: string;
-  weight: number;
+  weight?: number;
 }
 
 @Injectable({

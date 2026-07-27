@@ -32,20 +32,21 @@ export class AuthService {
   register(user: User): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/auth/register`, user).pipe(
       tap((saved: User) => {
-        this.addRegisteredUserToLocalStore(saved || user);
+        if (saved) {
+          this.addRegisteredUserToLocalStore(saved);
+        }
       })
     );
   }
 
-  private getEmailHashId(emailStr: string): number {
+  getStableUserId(emailStr?: string): number {
+    if (!emailStr) return 101;
+    const email = emailStr.toLowerCase().trim();
     let hash = 0;
-    const str = emailStr.toLowerCase().trim();
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash |= 0;
+    for (let i = 0; i < email.length; i++) {
+      hash = (hash * 31 + email.charCodeAt(i)) % 10000;
     }
-    return Math.abs(hash % 90000) + 100;
+    return Math.abs(hash) + 1000;
   }
 
   addRegisteredUserToLocalStore(user: User): void {
@@ -53,12 +54,9 @@ export class AuthService {
       const stored = localStorage.getItem(this.REGISTERED_USERS_KEY);
       const list: User[] = stored ? JSON.parse(stored) : [];
 
-      const dbId = this.getDatabaseUserIdByEmail(user.email);
-      const derivedId = dbId !== null ? dbId : this.getEmailHashId(user.email);
-
       const newUser: User = {
-        userId: user.userId || derivedId,
-        name: user.name,
+        userId: user.userId || this.getStableUserId(user.email),
+        name: user.name || this.getUserNameByEmail(user.email),
         email: user.email,
         phone: user.phone || '+1 555-0199',
         role: user.role || 'POLICYHOLDER',
@@ -73,7 +71,7 @@ export class AuthService {
       }
       localStorage.setItem(this.REGISTERED_USERS_KEY, JSON.stringify(list));
     } catch (e) {
-      console.warn('Error saving registered user to local store:', e);
+      console.warn('Error saving registered user:', e);
     }
   }
 
@@ -89,32 +87,29 @@ export class AuthService {
   isEmailRegistered(emailStr: string): boolean {
     if (!emailStr) return false;
     const target = emailStr.toLowerCase().trim();
-
-    const knownDbEmails = [
-      'gsunnyhith@gmail.com',
-      'gsunnyhit@gmail.com',
-      'adjuster@claimedge.com',
-      'admin@claimedge.com',
-      'adjuster1@claimedge.com',
-      'compliance@gmail.com',
-      'compilance@gmail.com',
-      'analyst@gmail.com',
-      'ajai@gmail.com',
-      'ahilan@gmail.com',
-      'dharun@gmail.com',
-      'naad@gmail.com'
-    ];
-
-    if (knownDbEmails.some(e => target.includes(e) || e.includes(target))) {
-      return true;
-    }
-
-    if (this.getDatabaseUserIdByEmail(target) !== null) {
-      return true;
-    }
-
     const registeredList = this.getRegisteredUsersFromLocalStore();
     return registeredList.some(u => u.email?.toLowerCase().trim() === target);
+  }
+
+  getUserNameByEmail(emailStr?: string): string {
+    if (!emailStr) return 'User';
+    const email = emailStr.toLowerCase().trim();
+
+    if (email.includes('policyadmin')) return 'Policy Administrator';
+    if (email.includes('admin@')) return 'Insurance Admin';
+    if (email.includes('ajai')) return 'Ajai Kumar';
+    if (email.includes('adjuster1')) return 'Adjuster 1';
+    if (email.includes('adjuster')) return 'Claims Adjuster';
+    if (email.includes('compliance') || email.includes('compilance')) return 'Compliance Officer';
+    if (email.includes('analyst')) return 'Op Analyst';
+    if (email.includes('ahilan')) return 'Ahilan';
+    if (email.includes('dharun')) return 'Dharun';
+    if (email.includes('gsunnyhith') || email.includes('gsunnyhit')) return 'Sunnyhith Gande';
+    if (email.includes('naad')) return 'Nandu';
+
+    // Format readable name from email
+    const prefix = email.split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
   }
 
   login(credentials: LoginRequest): Observable<string> {
@@ -136,62 +131,37 @@ export class AuthService {
 
   getUser(): User | null {
     const u = localStorage.getItem(this.USER_KEY);
-    return u ? JSON.parse(u) : null;
-  }
-
-  getDatabaseUserIdByEmail(emailStr?: string): number | null {
-    if (!emailStr) return null;
-    const email = emailStr.toLowerCase().trim();
-    if (email.includes('gsunnyhith')) return 1;
-    if (email.includes('gsunnyhit')) return 2;
-    if (email.includes('adjuster@')) return 3;
-    if (email.includes('admin@')) return 4;
-    if (email.includes('adjuster1@')) return 5;
-    if (email.includes('compliance') || email.includes('compilance')) return 6;
-    if (email.includes('analyst')) return 7;
-    if (email.includes('ajai')) return 8;
-    if (email.includes('ahilan')) return 9;
-    if (email.includes('dharun')) return 10;
-    if (email.includes('naad')) return 11;
-    return null;
-  }
-
-  getDatabaseRoleByEmail(emailStr?: string): string | null {
-    if (!emailStr) return null;
-    const email = emailStr.toLowerCase().trim();
-    if (email.includes('gsunnyhith')) return 'POLICYHOLDER';
-    if (email.includes('gsunnyhit')) return 'POLICYHOLDER';
-    if (email.includes('adjuster@')) return 'ADJUSTER';
-    if (email.includes('admin@')) return 'ADMIN';
-    if (email.includes('adjuster1@')) return 'ADJUSTER';
-    if (email.includes('compliance') || email.includes('compilance')) return 'COMPLIANCE';
-    if (email.includes('analyst')) return 'POLICYHOLDER';
-    if (email.includes('ajai')) return 'UNDERWRITER';
-    if (email.includes('ahilan')) return 'POLICYHOLDER';
-    if (email.includes('dharun')) return 'POLICYHOLDER';
-    if (email.includes('naad')) return 'POLICYHOLDER';
-    return null;
+    if (!u) return null;
+    const parsed: User = JSON.parse(u);
+    if (parsed && parsed.email) {
+      parsed.name = this.getUserNameByEmail(parsed.email);
+      if (!parsed.userId) parsed.userId = this.getStableUserId(parsed.email);
+    }
+    return parsed;
   }
 
   getCurrentUserId(): number {
     const u = this.getUser();
     if (u?.userId) return Number(u.userId);
 
-    if (u?.email) {
-      const dbId = this.getDatabaseUserIdByEmail(u.email);
-      if (dbId !== null) return dbId;
-
-      const registeredList = this.getRegisteredUsersFromLocalStore();
-      const match = registeredList.find(ru => ru.email?.toLowerCase() === u.email?.toLowerCase());
-      if (match && match.userId) return Number(match.userId);
-
-      return this.getEmailHashId(u.email);
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        const payload = JSON.parse(atob(payloadBase64));
+        if (payload.userId) return Number(payload.userId);
+      } catch {}
     }
 
-    return 100;
+    if (u?.email) return this.getStableUserId(u.email);
+    return 101;
   }
 
   setUser(user: User): void {
+    if (user && user.email) {
+      user.name = this.getUserNameByEmail(user.email);
+      if (!user.userId) user.userId = this.getStableUserId(user.email);
+    }
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
@@ -215,11 +185,9 @@ export class AuthService {
   getCurrentUserFromApi(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/users/me`).pipe(
       tap((user: User) => {
-        if (user && user.role) {
-          const currentLocal = this.getUser();
-          user.role = currentLocal?.role || user.role;
-          const exactId = this.getDatabaseUserIdByEmail(user.email) || user.userId || this.getEmailHashId(user.email);
-          user.userId = exactId;
+        if (user) {
+          user.name = this.getUserNameByEmail(user.email);
+          if (!user.userId) user.userId = this.getStableUserId(user.email);
           this.setUser(user);
         }
       })
@@ -255,32 +223,24 @@ export class AuthService {
       const payload = JSON.parse(decodedJson);
 
       const email = payload.sub || fallbackEmail;
-
-      const registeredList = this.getRegisteredUsersFromLocalStore();
-      const match = registeredList.find(ru => ru.email?.toLowerCase().trim() === email.toLowerCase().trim());
-      const dbRole = this.getDatabaseRoleByEmail(email);
-
-      // Extract authentic role from JWT payload or registered database record
-      const roleExtracted = dbRole || match?.role || payload.role || payload.authorities || 'POLICYHOLDER';
-      const dbId = this.getDatabaseUserIdByEmail(email);
-      const exactId = dbId !== null ? dbId : (match?.userId || payload.userId || this.getEmailHashId(email));
+      const roleFromJwt = payload.role || payload.authorities || 'POLICYHOLDER';
+      const userIdFromJwt = payload.userId || this.getStableUserId(email);
 
       const user: User = {
-        userId: exactId,
+        userId: Number(userIdFromJwt),
         email: email,
-        name: email.split('@')[0],
-        role: String(roleExtracted).toUpperCase()
+        name: this.getUserNameByEmail(email),
+        role: String(roleFromJwt).toUpperCase()
       };
+
       this.setUser(user);
     } catch (e) {
       console.warn('JWT Decode notice:', e);
-      const dbRole = this.getDatabaseRoleByEmail(fallbackEmail) || 'POLICYHOLDER';
-      const exactId = this.getDatabaseUserIdByEmail(fallbackEmail) || this.getEmailHashId(fallbackEmail);
       this.setUser({
-        userId: exactId,
+        userId: this.getStableUserId(fallbackEmail),
         email: fallbackEmail,
-        name: fallbackEmail.split('@')[0],
-        role: dbRole.toUpperCase()
+        name: this.getUserNameByEmail(fallbackEmail),
+        role: 'POLICYHOLDER'
       });
     }
   }

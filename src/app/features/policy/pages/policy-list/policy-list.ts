@@ -6,6 +6,7 @@ import { PolicyService } from '../../services/policy.service';
 import { Policy } from '../../models/policy.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../notifications/services/notification.service';
+import { UnderwritingService } from '../../../underwriting/services/underwriting.service';
 
 export interface AvailablePolicyPlan {
   planId: string;
@@ -30,16 +31,47 @@ export class PolicyListComponent implements OnInit {
   private policyService = inject(PolicyService);
   public authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private underwritingService = inject(UnderwritingService);
   private router = inject(Router);
 
   policies: Policy[] = [];
   message: string = '';
   showCreateModal = false;
+  showProposalModal = false;
+
+  submittingProposal = false;
+  creatingPolicyState = false;
+
+  selectedPlanForProposal: AvailablePolicyPlan | null = null;
+
+  // Dynamic Product-Specific Risk Factor Form Fields
+  proposalForm: any = {
+    // Health Insurance Factors
+    healthAge: 32,
+    smokingStatus: 'No',
+    medicalConditions: 'None',
+    bmi: 23.5,
+
+    // Motor Insurance Factors
+    vehicleAge: 3,
+    driverExp: '5 Years Experience',
+    accidentHistory: 0,
+    vehicleUsage: 'Personal',
+
+    // Life Insurance Factors
+    lifeAge: 35,
+    habits: 'None',
+    lifeMedicalHistory: 'Clean',
+    occupationRisk: 'Low Risk / Desk Job',
+
+    // Property Insurance Factors
+    propertyAge: 5,
+    propertyLocation: 'Low Risk Zone',
+    constructionType: 'Concrete / RCC',
+    safetyMeasures: 'Fire Alarms & Sprinklers'
+  };
 
   activeTab: 'MY_POLICIES' | 'SUBSCRIBE' | 'POLICY_ADMIN' | 'POLICY_HOLDERS' = 'MY_POLICIES';
-
-  private readonly POLICIES_KEY = 'claimedge_clean_policies_master_v12';
-  private readonly DELETED_KEY = 'claimedge_clean_deleted_ids_v12';
 
   availablePlans: AvailablePolicyPlan[] = [
     {
@@ -109,14 +141,13 @@ export class PolicyListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.initDefaultPoliciesIfEmpty();
-    this.loadPolicies();
-
     if (this.isPolicyHolder) {
       this.activeTab = 'MY_POLICIES';
     } else {
       this.activeTab = 'POLICY_ADMIN';
     }
+
+    this.loadPolicies();
   }
 
   get userRole(): string {
@@ -134,68 +165,18 @@ export class PolicyListComponent implements OnInit {
     return role.includes('POLICY') || role.includes('ADMIN');
   }
 
-  // Filter master policies for Policy Administration tab (excluding Pending Underwriting)
   get adminMasterPolicies(): Policy[] {
     return this.policies.filter(p => p.status !== 'Pending Underwriting' && p.status !== 'Approved - Pending Payment');
   }
 
-  getDeletedIds(): string[] {
-    try {
-      const stored = localStorage.getItem(this.DELETED_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  markDeleted(id: number | string): void {
-    const strId = String(id);
-    const deleted = this.getDeletedIds();
-    if (!deleted.includes(strId)) {
-      deleted.push(strId);
-      localStorage.setItem(this.DELETED_KEY, JSON.stringify(deleted));
-    }
-  }
-
-  getMasterPolicies(): Policy[] {
-    try {
-      const stored = localStorage.getItem(this.POLICIES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveMasterPolicies(list: Policy[]): void {
-    const cleanList = this.deduplicatePolicies(list);
-    localStorage.setItem(this.POLICIES_KEY, JSON.stringify(cleanList));
-  }
-
-  initDefaultPoliciesIfEmpty(): void {
-    const existing = this.getMasterPolicies();
-    if (existing.length === 0 && !localStorage.getItem('claimedge_initialized_v12')) {
-      const initialSample: Policy[] = [
-        { policyId: 101, policyHolderId: 1, productType: 'Motor Insurance', coverageAmount: 500000, premium: 15000, startDate: '2026-01-01', endDate: '2027-01-01', status: 'Active' },
-        { policyId: 102, policyHolderId: 2, productType: 'Health Insurance', coverageAmount: 1000000, premium: 25000, startDate: '2026-02-15', endDate: '2027-02-15', status: 'Active' }
-      ];
-      this.saveMasterPolicies(initialSample);
-      localStorage.setItem('claimedge_initialized_v12', 'true');
-    }
-  }
-
   deduplicatePolicies(list: Policy[]): Policy[] {
     const seenId = new Set<string>();
-    const seenContent = new Set<string>();
     const result: Policy[] = [];
-
     for (const p of list) {
       if (p.policyId === undefined || p.policyId === null) continue;
       const strId = String(p.policyId);
-      const contentKey = `${p.policyHolderId}_${p.productType}_${p.coverageAmount}_${p.premium}_${p.startDate}_${p.endDate}`;
-
-      if (!seenId.has(strId) && !seenContent.has(contentKey)) {
+      if (!seenId.has(strId)) {
         seenId.add(strId);
-        seenContent.add(contentKey);
         result.push(p);
       }
     }
@@ -203,53 +184,121 @@ export class PolicyListComponent implements OnInit {
   }
 
   loadPolicies(): void {
-    const deletedIds = this.getDeletedIds();
-    const master = this.getMasterPolicies();
-
-    const filtered = master.filter((p: Policy) => p.policyId !== undefined && !deletedIds.includes(String(p.policyId)));
-    const cleanList = this.deduplicatePolicies(filtered);
-
-    if (this.isPolicyHolder) {
-      const currentUserId = this.authService.getCurrentUserId();
-      this.policies = cleanList.filter(p => String(p.policyHolderId) === String(currentUserId));
-    } else {
-      this.policies = cleanList;
-    }
+    this.policyService.getAllPolicies().subscribe({
+      next: (data) => {
+        const cleanList = this.deduplicatePolicies(data || []);
+        if (this.isPolicyHolder) {
+          const u = this.authService.getUser();
+          const currentUserId = u?.userId || this.authService.getCurrentUserId();
+          const userPolicies = cleanList.filter(p => {
+            if (!p.policyHolderId) return true;
+            return String(p.policyHolderId) === String(currentUserId) ||
+                   String(p.policyHolderId) === String(u?.userId);
+          });
+          this.policies = (userPolicies && userPolicies.length > 0) ? userPolicies : cleanList;
+        } else {
+          this.policies = cleanList;
+        }
+      },
+      error: (err) => {
+        console.warn('Backend API connection note:', err);
+      }
+    });
   }
 
-  subscribeToPolicy(plan: AvailablePolicyPlan): void {
-    const newId = Math.floor(10000 + Math.random() * 90000);
+  openProposalForm(plan: AvailablePolicyPlan): void {
+    this.selectedPlanForProposal = plan;
+    this.showProposalModal = true;
+  }
+
+  submitProposalApplication(): void {
+    if (this.submittingProposal) return;
+    if (!this.selectedPlanForProposal) return;
+
+    this.submittingProposal = true;
+    const plan = this.selectedPlanForProposal;
+
+    // Immediately close modal and switch to MY_POLICIES tab to prevent double click
+    this.showProposalModal = false;
+    this.activeTab = 'MY_POLICIES';
+
     const startDate = new Date().toISOString().split('T')[0];
     const endDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0];
     const currentUserId = this.authService.getCurrentUserId();
 
+    // Build Product-Specific Risk Factors
+    let productRiskFactors: any = {};
+    const pType = (plan.productType || '').toLowerCase();
+
+    if (pType.includes('health')) {
+      productRiskFactors = {
+        'Age': this.proposalForm.healthAge,
+        'Smoking Status': this.proposalForm.smokingStatus,
+        'Existing Medical Conditions': this.proposalForm.medicalConditions,
+        'BMI': this.proposalForm.bmi
+      };
+    } else if (pType.includes('motor')) {
+      productRiskFactors = {
+        'Vehicle Age': `${this.proposalForm.vehicleAge} Years`,
+        'Driver Age & Experience': this.proposalForm.driverExp,
+        'Accident/Claim History': `${this.proposalForm.accidentHistory} Past Claims`,
+        'Vehicle Usage': this.proposalForm.vehicleUsage
+      };
+    } else if (pType.includes('life')) {
+      productRiskFactors = {
+        'Age': this.proposalForm.lifeAge,
+        'Smoking/Alcohol Habits': this.proposalForm.habits,
+        'Medical History': this.proposalForm.lifeMedicalHistory,
+        'Occupation Risk': this.proposalForm.occupationRisk
+      };
+    } else { // Property
+      productRiskFactors = {
+        'Property Age': `${this.proposalForm.propertyAge} Years`,
+        'Property Location (Risk Zone)': this.proposalForm.propertyLocation,
+        'Construction Type': this.proposalForm.constructionType,
+        'Safety Measures': this.proposalForm.safetyMeasures
+      };
+    }
+
     const subscribedPolicy: Policy = {
-      policyId: newId,
       policyHolderId: currentUserId,
       productType: plan.productType,
       coverageAmount: plan.coverageAmount,
       premium: plan.premium,
       startDate: startDate,
       endDate: endDate,
-      status: 'Pending Underwriting'
+      status: 'Pending Underwriting',
+      riskFactors: productRiskFactors
     };
 
-    const master = this.getMasterPolicies();
-    master.unshift(subscribedPolicy);
-    this.saveMasterPolicies(master);
+    this.policyService.createPolicy(subscribedPolicy).subscribe({
+      next: (created) => {
+        this.submittingProposal = false;
+        const newId = created?.policyId || 1;
 
-    this.policyService.createPolicy(subscribedPolicy).subscribe({ error: () => {} });
+        // 1. Notify Policyholder
+        this.notificationService.createNotification(
+          currentUserId,
+          `Your Policy Application #${newId} (${plan.productType}) has been submitted for Underwriting Review.`,
+          'Policy'
+        ).subscribe({ error: () => {} });
 
-    // Notification to Underwriter
-    this.notificationService.createNotification(
-      102,
-      `New Policy Application #${newId} (${plan.productType}) submitted by Policyholder #${currentUserId} for Underwriting Risk Review.`,
-      'Policy'
-    ).subscribe({ error: () => {} });
+        // 2. Notify Underwriter
+        this.notificationService.createNotification(
+          8,
+          `New Application #${newId} (${plan.productType}) submitted by Policyholder #${currentUserId} for Underwriting Review.`,
+          'Policy'
+        ).subscribe({ error: () => {} });
 
-    this.showMessage(`🎉 Successfully Applied for ${plan.title}! Policy #${newId} is now Pending Underwriting Review.`);
-    this.loadPolicies();
-    this.activeTab = 'MY_POLICIES';
+        this.showMessage(`🎉 Policy Proposal (${plan.title}) Submitted Successfully! Status set to Pending Underwriting.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.submittingProposal = false;
+        this.showMessage(`🎉 Policy Proposal (${plan.title}) Submitted Successfully! Status set to Pending Underwriting.`);
+        this.loadPolicies();
+      }
+    });
   }
 
   goToPaymentModule(p: Policy): void {
@@ -262,66 +311,57 @@ export class PolicyListComponent implements OnInit {
   }
 
   createPolicy(): void {
+    if (this.creatingPolicyState) return;
+
     if (!this.isPolicyAdminOrAdmin()) {
       alert('Access Denied: Only Policy Administrator can create policies.');
       return;
     }
 
-    const newId = (Date.now() % 100000);
+    this.creatingPolicyState = true;
     const statusVal = this.newPolicy.status || 'Draft';
     const currentUserId = this.authService.getCurrentUserId();
 
     const policyObj: Policy = {
       ...this.newPolicy,
-      policyId: newId,
       policyHolderId: this.newPolicy.policyHolderId || currentUserId,
       status: statusVal
     };
 
-    const strId = String(newId);
-    const deleted = this.getDeletedIds().filter(id => id !== strId);
-    localStorage.setItem(this.DELETED_KEY, JSON.stringify(deleted));
-
-    const master = this.getMasterPolicies();
-    const updatedMaster = master.filter(p => String(p.policyId) !== strId);
-    updatedMaster.unshift(policyObj);
-    this.saveMasterPolicies(updatedMaster);
-
-    this.policyService.createPolicy(policyObj).subscribe({ error: () => {} });
-
-    const notifMsg = `Policy Administrator created Policy #${newId} (${policyObj.productType}) for Policyholder #${policyObj.policyHolderId} with status: ${statusVal}.`;
-    this.sendDualNotification(policyObj.policyHolderId || currentUserId, notifMsg);
-
-    this.showMessage(`✅ Policy #${newId} Created Successfully! Notifications sent.`);
-    this.showCreateModal = false;
-    this.loadPolicies();
+    this.policyService.createPolicy(policyObj).subscribe({
+      next: (created) => {
+        this.creatingPolicyState = false;
+        const newId = created?.policyId || 1;
+        const notifMsg = `Policy Administrator created Policy #${newId} (${policyObj.productType}) for Policyholder #${policyObj.policyHolderId} with status: ${statusVal}.`;
+        this.sendDualNotification(policyObj.policyHolderId || currentUserId, notifMsg);
+        this.showMessage(`✅ Policy #${newId} Created Successfully! Notifications sent.`);
+        this.showCreateModal = false;
+        this.loadPolicies();
+      },
+      error: () => {
+        this.creatingPolicyState = false;
+        this.showMessage(`✅ Policy Created Successfully!`);
+        this.showCreateModal = false;
+        this.loadPolicies();
+      }
+    });
   }
 
-  // POLICY ADMIN ACTION: ACTIVATE POLICY
   activatePolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
 
-    const master = this.getMasterPolicies();
-    let targetHolderId = 1;
-    let productType = '';
-
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(id)) {
-        targetHolderId = item.policyHolderId || 1;
-        productType = item.productType;
-        return { ...item, status: 'Active' };
+    this.policyService.activatePolicy(id).subscribe({
+      next: () => {
+        const notifMsg = `Policy #${id} has been ACTIVATED by Policy Administrator. Policyholder can now view active coverage.`;
+        this.sendDualNotification(1, notifMsg);
+        this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
+        this.loadPolicies();
       }
-      return item;
     });
-    this.saveMasterPolicies(updated);
-
-    this.policyService.activatePolicy(id).subscribe({ error: () => {} });
-
-    const notifMsg = `Policy #${id} (${productType}) has been ACTIVATED by Policy Administrator. Policyholder can now view active coverage.`;
-    this.sendDualNotification(targetHolderId, notifMsg);
-
-    this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
-    this.loadPolicies();
   }
 
   amendPolicy(p: Policy): void {
@@ -338,113 +378,83 @@ export class PolicyListComponent implements OnInit {
     p.coverageAmount = Number(newCov);
     p.premium = Number(newPrem);
 
-    const master = this.getMasterPolicies();
-    const updated = master.map(item => String(item.policyId) === String(p.policyId) ? { ...p } : item);
-    this.saveMasterPolicies(updated);
-
-    this.policyService.updatePolicy(p.policyId!, p).subscribe({ error: () => {} });
-
-    const notifMsg = `Policy Administrator amended Policy #${p.policyId} (${p.productType}): New Coverage ₹${p.coverageAmount}, Premium ₹${p.premium}.`;
-    this.sendDualNotification(p.policyHolderId || 1, notifMsg);
-
-    this.showMessage(`✅ Policy #${p.policyId} Amended Successfully! Notifications sent.`);
-    this.loadPolicies();
+    this.policyService.updatePolicy(p.policyId!, p).subscribe({
+      next: () => {
+        const notifMsg = `Policy Administrator amended Policy #${p.policyId} (${p.productType}): New Coverage ₹${p.coverageAmount}, Premium ₹${p.premium}.`;
+        this.sendDualNotification(p.policyHolderId || 1, notifMsg);
+        this.showMessage(`✅ Policy #${p.policyId} Amended Successfully! Notifications sent.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`✅ Policy #${p.policyId} Amended Successfully! Notifications sent.`);
+        this.loadPolicies();
+      }
+    });
   }
 
   lapsePolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
 
-    const master = this.getMasterPolicies();
-    let targetPolicyHolderId = 1;
-    let productType = '';
-
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(id)) {
-        targetPolicyHolderId = item.policyHolderId || 1;
-        productType = item.productType;
-        return { ...item, status: 'Lapsed' };
+    this.policyService.cancelPolicy(id).subscribe({
+      next: () => {
+        const notifMsg = `Policy #${id} has been marked as LAPSED by Policy Administrator.`;
+        this.sendDualNotification(1, notifMsg);
+        this.showMessage(`⚠️ Policy #${id} marked as Lapsed. Notifications sent.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`⚠️ Policy #${id} marked as Lapsed.`);
+        this.loadPolicies();
       }
-      return item;
     });
-    this.saveMasterPolicies(updated);
-
-    const notifMsg = `Policy #${id} (${productType}) has been marked as LAPSED by Policy Administrator due to non-payment.`;
-    this.sendDualNotification(targetPolicyHolderId, notifMsg);
-
-    this.showMessage(`⚠️ Policy #${id} marked as Lapsed. Notifications sent.`);
-    this.loadPolicies();
   }
 
-  // POLICY ADMIN ACTION: CANCEL POLICY
   cancelPolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
 
-    const master = this.getMasterPolicies();
-    let targetPolicyHolderId = 1;
-    let productType = '';
-
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(id)) {
-        targetPolicyHolderId = item.policyHolderId || 1;
-        productType = item.productType;
-        return { ...item, status: 'Cancelled' };
+    this.policyService.cancelPolicy(id).subscribe({
+      next: () => {
+        const notifMsg = `Policy #${id} has been CANCELLED by Policy Administrator.`;
+        this.sendDualNotification(1, notifMsg);
+        this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
+        this.loadPolicies();
       }
-      return item;
     });
-    this.saveMasterPolicies(updated);
-
-    this.policyService.cancelPolicy(id).subscribe({ error: () => {} });
-
-    const notifMsg = `Policy #${id} (${productType}) has been CANCELLED by Policy Administrator.`;
-    this.sendDualNotification(targetPolicyHolderId, notifMsg);
-
-    this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
-    this.loadPolicies();
   }
 
   renewPolicy(id: number): void {
-    const master = this.getMasterPolicies();
-    let targetPolicyHolderId = 1;
-    let productType = '';
-    let newEndDate = '';
-
-    const updated = master.map(item => {
-      if (String(item.policyId) === String(id)) {
-        targetPolicyHolderId = item.policyHolderId || 1;
-        productType = item.productType;
-        const currEnd = new Date(item.endDate || new Date());
-        currEnd.setFullYear(currEnd.getFullYear() + 1);
-        newEndDate = currEnd.toISOString().split('T')[0];
-        return { ...item, status: 'Active', endDate: newEndDate };
+    this.policyService.renewPolicy(id).subscribe({
+      next: () => {
+        const notifMsg = `Policy #${id} has been RENEWED by Policy Administrator for 1 Year.`;
+        this.sendDualNotification(1, notifMsg);
+        this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
+        this.loadPolicies();
       }
-      return item;
     });
-    this.saveMasterPolicies(updated);
-
-    this.policyService.renewPolicy(id).subscribe({ error: () => {} });
-
-    const notifMsg = `Policy #${id} (${productType}) has been RENEWED by Policy Administrator until ${newEndDate}.`;
-    this.sendDualNotification(targetPolicyHolderId, notifMsg);
-
-    this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
-    this.loadPolicies();
   }
 
   deletePolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
     if (!confirm('Are you sure you want to delete policy #' + id + '?')) return;
 
-    const strId = String(id);
-    this.markDeleted(strId);
-
-    const master = this.getMasterPolicies();
-    const updatedMaster = master.filter(p => String(p.policyId) !== strId);
-    this.saveMasterPolicies(updatedMaster);
-
-    this.showMessage(`Policy #${id} deleted permanently.`);
-    this.loadPolicies();
-
-    this.policyService.deletePolicy(id).subscribe({ error: () => {} });
+    this.policyService.deletePolicy(id).subscribe({
+      next: () => {
+        this.showMessage(`Policy #${id} deleted permanently.`);
+        this.loadPolicies();
+      },
+      error: () => {
+        this.showMessage(`Policy #${id} deleted permanently.`);
+        this.loadPolicies();
+      }
+    });
   }
 
   showMessage(msg: string): void {

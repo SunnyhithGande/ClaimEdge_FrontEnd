@@ -1,22 +1,270 @@
-body{
-   background:#f4f6f9;
+/* ==========================================================================
+   ClaimEdge Corporate Minimalist Professional Design System
+   ========================================================================== */
+
+:root {
+  --primary-slate: #0f172a;
+  --primary-slate-hover: #1e293b;
+  --secondary-slate: #475569;
+  --accent-navy: #1e3a8a;
+  --bg-neutral: #f8fafc;
+  --card-border: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  
+  /* Minimal Subtle Colors */
+  --btn-slate-bg: #1e293b;
+  --btn-slate-text: #ffffff;
+  --btn-slate-hover: #0f172a;
+  
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #334155;
+  --btn-secondary-border: #cbd5e1;
+  --btn-secondary-hover: #f8fafc;
+  
+  --btn-success-bg: #0f766e;
+  --btn-success-text: #ffffff;
+  --btn-success-hover: #115e59;
+  
+  --btn-danger-bg: #be123c;
+  --btn-danger-text: #ffffff;
+  --btn-danger-hover: #9f1239;
+  
+  --btn-outline-danger-bg: #ffffff;
+  --btn-outline-danger-text: #e11d48;
+  --btn-outline-danger-border: #fecdd3;
+  --btn-outline-danger-hover: #fff1f2;
 }
 
-.card{
-   border-radius:15px;
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.table{
-   background:white;
-}
+/* Minimalist Clean Cards */
 .card {
-    transition: 0.3s;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-    transform: translateY(-3px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Modern Professional Button Design */
+.btn {
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: none !important;
+}
+
+/* Primary Button */
+.btn-primary {
+  background-color: var(--btn-slate-bg) !important;
+  color: var(--btn-slate-text) !important;
+  border: 1px solid var(--btn-slate-bg) !important;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--btn-slate-hover) !important;
+  border-color: var(--btn-slate-hover) !important;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: var(--btn-secondary-bg) !important;
+  color: var(--btn-secondary-text) !important;
+  border: 1px solid var(--btn-secondary-border) !important;
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+  background-color: var(--btn-secondary-hover) !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Success Button */
+.btn-success {
+  background-color: var(--btn-success-bg) !important;
+  color: var(--btn-success-text) !important;
+  border: 1px solid var(--btn-success-bg) !important;
+}
+
+.btn-success:hover, .btn-success:focus {
+  background-color: var(--btn-success-hover) !important;
+  border-color: var(--btn-success-hover) !important;
+}
+
+.btn-outline-success {
+  background-color: #ffffff !important;
+  color: #0f766e !important;
+  border: 1px solid #ccfbf1 !important;
+}
+
+.btn-outline-success:hover {
+  background-color: #f0fdf4 !important;
+  color: #115e59 !important;
+  border-color: #99f6e4 !important;
+}
+
+/* Danger / Cancel Button */
+.btn-danger {
+  background-color: var(--btn-danger-bg) !important;
+  color: var(--btn-danger-text) !important;
+  border: 1px solid var(--btn-danger-bg) !important;
+}
+
+.btn-danger:hover, .btn-danger:focus {
+  background-color: var(--btn-danger-hover) !important;
+  border-color: var(--btn-danger-hover) !important;
+}
+
+.btn-outline-danger {
+  background-color: var(--btn-outline-danger-bg) !important;
+  color: var(--btn-outline-danger-text) !important;
+  border: 1px solid var(--btn-outline-danger-border) !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--btn-outline-danger-hover) !important;
+  border-color: #f43f5e !important;
+}
+
+/* Warning / Neutral Action Buttons */
+.btn-outline-primary {
+  background-color: #ffffff !important;
+  color: #1e3a8a !important;
+  border: 1px solid #dbeafe !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: #eff6ff !important;
+  border-color: #93c5fd !important;
+}
+
+.btn-outline-info {
+  background-color: #ffffff !important;
+  color: #0369a1 !important;
+  border: 1px solid #e0f2fe !important;
+}
+
+.btn-outline-info:hover {
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
+}
+
+.btn-outline-warning {
+  background-color: #ffffff !important;
+  color: #b45309 !important;
+  border: 1px solid #fef3c7 !important;
+}
+
+.btn-outline-warning:hover {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+/* Professional Minimalist Tables */
+.table {
+  background-color: #ffffff;
+  color: #334155;
+  border-color: #f1f5f9;
+}
+
+.table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr {
+  transition: background-color 0.15s ease;
 }
 
 .table-hover tbody tr:hover {
-    background-color: #f8f9fa;
+  background-color: #f8fafc;
+}
+
+.table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+}
+
+/* Minimalist Professional Badges */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.75em;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.bg-primary {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.bg-success {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0;
+}
+
+.bg-danger {
+  background-color: #fef2f2 !important;
+  color: #be123c !important;
+  border: 1px solid #fecdd3;
+}
+
+.bg-warning {
+  background-color: #fffbeb !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a;
+}
+
+.bg-info {
+  background-color: #f0f9ff !important;
+  color: #0369a1 !important;
+  border: 1px solid #bae6fd;
+}
+
+.bg-secondary {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1;
+}
+
+/* Minimal Tabs */
+.custom-pills .nav-link {
+  color: #64748b;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.custom-pills .nav-link.active {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }

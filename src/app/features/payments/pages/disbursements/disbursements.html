@@ -26,9 +26,8 @@
                         <tr>
                             <th>Payout ID</th>
                             <th>Approved Claim ID</th>
-                            <th>Payee Name</th>
+                            <th>Policyholder ID</th>
                             <th>Recommended Amount</th>
-                            <th>Payment Method</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -37,9 +36,8 @@
                         <tr *ngFor="let d of disbursements">
                             <td><strong>#{{ d.disbursementId }}</strong></td>
                             <td><span class="badge bg-success-subtle text-success border border-success">Approved Claim #{{ d.claimId }}</span></td>
-                            <td>{{ d.payeeName }}</td>
+                            <td><span class="badge bg-light text-dark border">Holder #{{ d.policyHolderId || d.claimId || 'Unknown' }}</span></td>
                             <td class="fw-bold text-success">₹{{ d.amount | number }}</td>
-                            <td>{{ d.paymentMethod }}</td>
                             <td>
                                 <span class="status-badge" [ngClass]="{
                                     'approved': d.status === 'PROCESSED',
@@ -64,10 +62,10 @@
                             </td>
                         </tr>
                         <tr *ngIf="disbursements.length === 0 && !loading">
-                            <td colspan="7" class="text-center py-4 text-muted">No payout recommendations found. Once an Adjuster approves a claim, it will appear here for payout.</td>
+                            <td colspan="6" class="text-center py-4 text-muted">No payout recommendations found. Once an Adjuster approves a claim, it will appear here for payout.</td>
                         </tr>
                         <tr *ngIf="loading">
-                            <td colspan="7" class="text-center py-4 text-muted">Loading payout recommendations...</td>
+                            <td colspan="6" class="text-center py-4 text-muted">Loading payout recommendations...</td>
                         </tr>
                     </tbody>
                 </table>
