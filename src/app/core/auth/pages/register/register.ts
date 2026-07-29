@@ -44,16 +44,7 @@ export class Register {
 
     const emailVal = (this.registerForm.value.email || '').toLowerCase().trim();
 
-    // 1. Strict Duplicate Email Check against MySQL Database & Local Directory
-    if (this.authService.isEmailRegistered(emailVal)) {
-      this.errorMessage = '⚠️ This email has already been registered. Please use a different email address or proceed to Login.';
-      this.successMessage = '';
-      this.loading = false;
-      this.registrationCompleted = false;
-      this.cdr.detectChanges();
-      return;
-    }
-
+    // Registration duplicate check is now handled exclusively by the backend (409 Conflict)
     this.loading = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -78,9 +69,23 @@ export class Register {
       error: (error: any) => {
         this.loading = false;
         console.error('Registration Error:', error);
+        
+        let msg = 'Registration failed. ';
+        if (error.status === 0) {
+           msg += 'Cannot connect to backend server. Is it running?';
+        } else if (error.status === 401) {
+           msg += 'Session invalid. Please clear your cache and try again.';
+        } else if (error.status === 409) {
+           msg += 'This email has already been registered.';
+        } else if (error.error && error.error.message) {
+           msg += error.error.message;
+        } else if (error.error && typeof error.error === 'string') {
+           msg += error.error;
+        } else {
+           msg += 'Server encountered an error.';
+        }
 
-        // Display duplicate email error message and do NOT save duplicate account
-        this.errorMessage = '⚠️ This email has already been registered. Please use a different email address or proceed to Login.';
+        this.errorMessage = '⚠️ ' + msg;
         this.successMessage = '';
         this.registrationCompleted = false;
         this.cdr.detectChanges();

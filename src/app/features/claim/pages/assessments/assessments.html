@@ -34,11 +34,9 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label font-weight-bold">Adjuster User ID</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" [(ngModel)]="assessmentData.adjusterId" placeholder="Adjuster User ID" [disabled]="authService.getRole() !== 'ADMIN'">
-                        <button class="btn btn-outline-primary" type="button" *ngIf="authService.getRole() === 'ADMIN'" (click)="assignAdjusterBtn()">Assign Adjuster</button>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="p-2 border rounded bg-light w-100 text-center fw-bold text-primary">
+                        Assigned Adjuster ID: {{ selectedClaim?.assignedAdjusterId || 'Not Assigned' }}
                     </div>
                 </div>
             </div>

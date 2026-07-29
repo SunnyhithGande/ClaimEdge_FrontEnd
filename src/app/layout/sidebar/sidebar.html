@@ -164,18 +164,23 @@
         <!-- Compliance Analyst Navigation Menu -->
         <ng-container *ngIf="(hasRole('COMPLIANCE') || hasRole('FRAUD_ANALYST')) && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
             <li class="nav-item">
-                <a [routerLink]="'/compliance'" (click)="navigate($event, '/compliance')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-journal-check"></i> <span>Compliance Dashboard</span>
+                <a [routerLink]="'/compliance/dashboard'" (click)="navigate($event, '/compliance/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-shield-check"></i> <span>Compliance Dashboard</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a [routerLink]="'/fraud-detection'" (click)="navigate($event, '/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                <a [routerLink]="'/compliance/fraud-dashboard'" (click)="navigate($event, '/compliance/fraud-dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bar-chart"></i> <span>Fraud Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/compliance/fraud-detection'" (click)="navigate($event, '/compliance/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                     <i class="bi bi-shield-exclamation"></i> <span>Fraud Detection</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a [routerLink]="'/identity-management'" (click)="navigate($event, '/identity-management')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-list-task"></i> <span>Audit Logs</span>
+                <a [routerLink]="'/compliance/audit-logs'" (click)="navigate($event, '/compliance/audit-logs')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-text"></i> <span>Audit Logs</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -228,13 +233,23 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a [routerLink]="'/fraud-detection'" (click)="navigate($event, '/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                <a [routerLink]="'/compliance/fraud-detection'" (click)="navigate($event, '/compliance/fraud-detection')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                     <i class="bi bi-shield-exclamation"></i> <span>Fraud Detection</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a [routerLink]="'/compliance'" (click)="navigate($event, '/compliance')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-journal-check"></i> <span>Compliance & Audit</span>
+                <a [routerLink]="'/compliance/dashboard'" (click)="navigate($event, '/compliance/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-shield-check"></i> <span>Compliance</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/compliance/fraud-dashboard'" (click)="navigate($event, '/compliance/fraud-dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-bar-chart"></i> <span>Fraud Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a [routerLink]="'/compliance/audit-logs'" (click)="navigate($event, '/compliance/audit-logs')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-journal-text"></i> <span>Audit Logs</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -245,6 +260,11 @@
             <li class="nav-item">
                 <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                     <i class="bi bi-bell"></i> <span>Notifications</span>
+                </a>
+            </li>
+            <li class="nav-item mt-3 pt-3 border-top">
+                <a (click)="generateComplianceReport()" class="nav-link text-success fw-bold" style="cursor: pointer;">
+                    <i class="bi bi-file-earmark-pdf"></i> <span>Generate Report</span>
                 </a>
             </li>
         </ng-container>

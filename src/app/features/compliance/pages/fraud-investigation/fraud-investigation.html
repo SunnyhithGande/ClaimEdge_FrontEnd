@@ -1,0 +1,83 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 text-dark fw-bold">Fraud Flag Details</h2>
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+            <i class="bi bi-arrow-left me-2"></i> Back
+        </button>
+    </div>
+
+    <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div *ngIf="message" class="alert alert-info alert-dismissible fade show shadow-sm border-0 rounded-3">
+        {{ message }}
+        <button type="button" class="btn-close" (click)="message = ''"></button>
+    </div>
+
+    <div *ngIf="!loading && fraudFlag && claim" class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom pt-4 pb-3">
+            <h5 class="mb-0 fw-bold text-dark">Claim Information</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <p class="text-muted mb-1 fs-8 text-uppercase fw-bold">Policy ID</p>
+                    <h5 class="text-dark">POL-{{ claim.policyId }}</h5>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1 fs-8 text-uppercase fw-bold">Claim ID</p>
+                    <h5 class="text-dark">CLM-{{ claim.claimId }}</h5>
+                </div>
+                <div class="col-md-4">
+                    <p class="text-muted mb-1 fs-8 text-uppercase fw-bold">Incident Date</p>
+                    <h5 class="text-dark">{{ claim.incidentDate }}</h5>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-muted mb-1 fs-8 text-uppercase fw-bold">Incident Details</p>
+                <div class="bg-light p-3 rounded-3 border">
+                    <p class="mb-0">{{ claim.reason }}</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-muted mb-2 fs-8 text-uppercase fw-bold">Documents Submitted</p>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center border-0 bg-light mb-2 rounded-3" *ngFor="let doc of documents">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-file-earmark-text text-primary fs-4 me-3"></i>
+                            <div>
+                                <h6 class="mb-0 text-dark fs-7">{{ doc.name }}</h6>
+                                <small class="text-muted fs-8">{{ doc.size }}</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary fw-bold px-3" (click)="viewDocument(doc)">
+                            <i class="bi bi-eye me-1"></i> View
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex gap-3 align-items-center">
+                <button class="btn btn-primary px-4" (click)="confirmInvestigation()" [disabled]="isConfirmed || submitting">
+                    <i class="bi bi-search me-2"></i> Investigate
+                </button>
+                <button class="btn btn-success px-4" (click)="clearFlag()" [disabled]="!isConfirmed || submitting || isCleared">
+                    <i class="bi bi-check-circle me-2"></i> Clear Flag
+                </button>
+
+                <div class="d-flex align-items-center ms-auto" *ngIf="isCleared">
+                    <label class="me-2 fw-bold text-muted">Assign Adjuster:</label>
+                    <input type="text" class="form-control me-2" placeholder="Adjuster ID" [(ngModel)]="adjusterId" style="max-width: 120px;">
+                    <button class="btn btn-outline-primary" (click)="assignAdjuster()" [disabled]="submitting">
+                        Assign Adjuster
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

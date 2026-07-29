@@ -27,8 +27,13 @@ import { ProcessDisbursementComponent } from './features/payments/pages/process-
 
 import { FraudListComponent } from './features/fraud/pages/fraud-list/fraud-list';
 import { ComplianceListComponent } from './features/compliance/pages/compliance-list/compliance-list';
+import { ComplianceDashboardComponent } from './features/compliance/pages/compliance-dashboard/compliance-dashboard';
+import { FraudDashboardComponent } from './features/compliance/pages/fraud-dashboard/fraud-dashboard';
+import { FraudDetectionComponent } from './features/compliance/pages/fraud-detection/fraud-detection';
+import { FraudInvestigationComponent } from './features/compliance/pages/fraud-investigation/fraud-investigation';
 import { AnalyticsDashboardComponent } from './features/analytics/pages/analytics-dashboard/analytics-dashboard';
 import { NotificationsListComponent } from './features/notifications/pages/notifications-list/notifications-list';
+import { AuditLogsComponent } from './features/compliance/pages/audit-logs/audit-logs';
 
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -86,7 +91,7 @@ export const routes: Routes = [
     path: 'claims/list',
     component: ClaimsListComponent,
     canActivate: [authGuard, roleGuard],
-    data: { expectedRoles: ['POLICYHOLDER', 'ADJUSTER', 'FRAUD_ANALYST', 'OPERATIONS', 'ADMIN'] }
+    data: { expectedRoles: ['POLICYHOLDER', 'ADJUSTER', 'FRAUD_ANALYST', 'OPERATIONS', 'OPERATIONS_ANALYST', 'ADMIN'] }
   },
   {
     path: 'claims/create',
@@ -146,16 +151,34 @@ export const routes: Routes = [
     data: { expectedRoles: ['ADJUSTER', 'ADMIN'] }
   },
   {
-    path: 'fraud-detection',
-    component: FraudListComponent,
+    path: 'compliance/dashboard',
+    component: ComplianceDashboardComponent,
     canActivate: [authGuard, roleGuard],
-    data: { expectedRoles: ['FRAUD_ANALYST', 'COMPLIANCE', 'OPERATIONS', 'ADMIN'] }
+    data: { expectedRoles: ['COMPLIANCE', 'FRAUD_ANALYST', 'ADMIN'] }
   },
   {
-    path: 'compliance',
-    component: ComplianceListComponent,
+    path: 'compliance/fraud-dashboard',
+    component: FraudDashboardComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRoles: ['COMPLIANCE', 'FRAUD_ANALYST', 'ADMIN'] }
+  },
+  {
+    path: 'compliance/fraud-detection',
+    component: FraudDetectionComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRoles: ['COMPLIANCE', 'FRAUD_ANALYST', 'ADMIN'] }
+  },
+  {
+    path: 'compliance/audit-logs',
+    component: AuditLogsComponent,
     canActivate: [authGuard, roleGuard],
     data: { expectedRoles: ['COMPLIANCE', 'ADMIN'] }
+  },
+  {
+    path: 'compliance/fraud-investigation/:id',
+    component: FraudInvestigationComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRoles: ['COMPLIANCE', 'FRAUD_ANALYST', 'ADMIN'] }
   },
   {
     path: 'analytics',

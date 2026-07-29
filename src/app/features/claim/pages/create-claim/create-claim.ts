@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ClaimsService } from '../../services/claim.service';
 import { PolicyService } from '../../../policy/services/policy.service';
 import { Policy } from '../../../policy/models/policy.model';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface UploadedDoc {
   name: string;
@@ -30,6 +31,7 @@ export class CreateClaimComponent implements OnInit {
   private claimsService = inject(ClaimsService);
   private policyService = inject(PolicyService);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   policies: Policy[] = [];
   submitting = false;
@@ -49,7 +51,8 @@ export class CreateClaimComponent implements OnInit {
   }
 
   loadPoliciesFromApi(): void {
-    this.policyService.getAllPolicies().subscribe({
+    const userId = this.authService.getCurrentUserId();
+    this.policyService.getPoliciesByUserId(userId).subscribe({
       next: (apiData) => {
         const rawApi = apiData || [];
         this.policies = rawApi.filter(p => {
@@ -75,12 +78,18 @@ export class CreateClaimComponent implements OnInit {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-      this.uploadedDocuments.push({
-        name: file.name,
-        size: `${sizeMb} MB`,
-        date: new Date().toISOString().split('T')[0],
-        type: file.type || 'Document'
-      });
+      
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.uploadedDocuments.push({
+          name: file.name,
+          size: `${sizeMb} MB`,
+          date: new Date().toISOString().split('T')[0],
+          type: file.type || 'Document',
+          url: e.target.result
+        });
+      };
+      reader.readAsDataURL(file);
     }
   }
 

@@ -46,4 +46,8 @@ export class Sidebar implements OnInit {
   hasRole(...allowedRoles: string[]): boolean {
     return this.authService.hasRole(...allowedRoles);
   }
+
+  generateComplianceReport(): void {
+    window.print();
+  }
 }

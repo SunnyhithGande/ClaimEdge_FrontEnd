@@ -70,7 +70,7 @@ export class IdentityManagementComponent implements OnInit {
         if (apiUsers && apiUsers.length > 0) {
           const apiMapped: User[] = apiUsers.map((u: any) => ({
             userId: u.userId || u.id,
-            name: u.name || this.authService.getUserNameByEmail(u.email),
+            name: u.name || (u.email ? u.email.split('@')[0] : 'Unknown'),
             email: u.email,
             phone: u.phone || '+1 555-0199',
             role: u.role || 'POLICYHOLDER',

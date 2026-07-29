@@ -42,6 +42,14 @@ export class ClaimsService {
 
   }
 
+  getClaimsByUserId(userId: number): Observable<any> {
+
+    return this.http.get(
+      `${this.claimsUrl}/user/${userId}`
+    );
+
+  }
+
   getClaimById(
     id: number
   ): Observable<any> {

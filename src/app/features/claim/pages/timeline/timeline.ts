@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClaimsService } from '../../services/claim.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface FlowchartStep {
   id: string;
@@ -23,8 +24,9 @@ export interface FlowchartStep {
 export class TimelineComponent implements OnInit {
 
   private claimsService = inject(ClaimsService);
+  private authService = inject(AuthService);
 
-  claimId: string = '1';
+  claimId: string = '';
   claimDetails: any = null;
   timeline: string[] = [];
   errorMessage: string = '';
@@ -57,27 +59,46 @@ export class TimelineComponent implements OnInit {
 
     this.loading = true;
 
-    // Fetch claim details directly from backend MySQL API
-    this.claimsService.getClaimById(id).subscribe({
-      next: (c: any) => {
-        this.loading = false;
-        const activeStatus = c?.status || 'SUBMITTED';
+    const isPolicyHolder = this.authService.hasRole('POLICYHOLDER');
 
-        this.claimDetails = {
-          ...c,
-          status: activeStatus
-        };
-        this.buildFlowchart(activeStatus);
-        this.timeline = this.buildTimelineList(id, activeStatus);
-      },
-      error: () => {
-        this.loading = false;
-        this.claimDetails = null;
-        this.flowchartSteps = [];
-        this.timeline = [];
-        this.errorMessage = `❌ Claim #${id} does not exist in the system. Please enter a valid Claim ID.`;
-      }
-    });
+    if (isPolicyHolder) {
+      this.claimsService.getClaimsByUserId(this.authService.getCurrentUserId()).subscribe({
+        next: (claims: any[]) => {
+          const c = (claims || []).find(claim => claim.claimId === id);
+          if (c) {
+            this.processClaimSuccess(c, id);
+          } else {
+            this.processClaimError(id);
+          }
+        },
+        error: () => this.processClaimError(id)
+      });
+    } else {
+      this.claimsService.getClaimById(id).subscribe({
+        next: (c: any) => this.processClaimSuccess(c, id),
+        error: () => this.processClaimError(id)
+      });
+    }
+  }
+
+  processClaimSuccess(c: any, id: number): void {
+    this.loading = false;
+    const activeStatus = c?.status || 'SUBMITTED';
+
+    this.claimDetails = {
+      ...c,
+      status: activeStatus
+    };
+    this.buildFlowchart(activeStatus);
+    this.timeline = this.buildTimelineList(id, activeStatus);
+  }
+
+  processClaimError(id: number): void {
+    this.loading = false;
+    this.claimDetails = null;
+    this.flowchartSteps = [];
+    this.timeline = [];
+    this.errorMessage = `❌ Claim #${id} does not exist in your account. Please enter a valid Claim ID.`;
   }
 
   buildFlowchart(currentStatus: string): void {

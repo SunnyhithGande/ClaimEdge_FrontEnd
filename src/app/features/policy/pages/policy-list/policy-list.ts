@@ -116,6 +116,8 @@ export class PolicyListComponent implements OnInit {
     }
   ];
 
+  originalAvailablePlans: AvailablePolicyPlan[] = [];
+
   newPolicy: Policy = {
     policyHolderId: 1,
     productType: 'Motor Insurance',
@@ -141,6 +143,8 @@ export class PolicyListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.originalAvailablePlans = [...this.availablePlans];
+
     if (this.isPolicyHolder) {
       this.activeTab = 'MY_POLICIES';
     } else {
@@ -184,26 +188,46 @@ export class PolicyListComponent implements OnInit {
   }
 
   loadPolicies(): void {
-    this.policyService.getAllPolicies().subscribe({
-      next: (data) => {
-        const cleanList = this.deduplicatePolicies(data || []);
-        if (this.isPolicyHolder) {
-          const u = this.authService.getUser();
-          const currentUserId = u?.userId || this.authService.getCurrentUserId();
-          const userPolicies = cleanList.filter(p => {
-            if (!p.policyHolderId) return true;
-            return String(p.policyHolderId) === String(currentUserId) ||
-                   String(p.policyHolderId) === String(u?.userId);
-          });
-          this.policies = (userPolicies && userPolicies.length > 0) ? userPolicies : cleanList;
-        } else {
-          this.policies = cleanList;
+    if (this.isPolicyHolder) {
+      const currentUserId = this.authService.getCurrentUserId();
+      this.policyService.getPoliciesByUserId(currentUserId).subscribe({
+        next: (data) => {
+          this.policies = this.deduplicatePolicies(data || []);
+        },
+        error: (err) => {
+          console.warn('Backend API connection note:', err);
         }
-      },
-      error: (err) => {
-        console.warn('Backend API connection note:', err);
-      }
-    });
+      });
+
+      this.policyService.getAllPolicies().subscribe({
+        next: (allData) => {
+          const allPolicies = this.deduplicatePolicies(allData || []);
+          const masterPolicies = allPolicies.filter(p => p.policyHolderId !== currentUserId && (p.status?.toUpperCase() === 'ACTIVE' || p.status?.toUpperCase() === 'DRAFT'));
+          
+          const dynamicPlans = masterPolicies.map(p => ({
+            planId: 'ADMIN_PLAN_' + p.policyId,
+            productType: p.productType,
+            title: p.productType + ' (Master Plan #' + p.policyId + ')',
+            description: 'A customized master policy plan created by the Policy Administrator.',
+            coverageAmount: p.coverageAmount,
+            premium: p.premium,
+            icon: this.getIconForProduct(p.productType),
+            features: ['Administrator Defined', 'Standard Coverage', 'Subject to Underwriting']
+          }));
+
+          this.availablePlans = [...this.originalAvailablePlans, ...dynamicPlans];
+        }
+      });
+    } else {
+      this.policyService.getAllPolicies().subscribe({
+        next: (data) => {
+          this.policies = this.deduplicatePolicies(data || []);
+        },
+        error: (err) => {
+          console.warn('Backend API connection note:', err);
+        }
+      });
+    }
   }
 
   openProposalForm(plan: AvailablePolicyPlan): void {
@@ -460,5 +484,14 @@ export class PolicyListComponent implements OnInit {
   showMessage(msg: string): void {
     this.message = msg;
     setTimeout(() => this.message = '', 3500);
+  }
+
+  getIconForProduct(productType: string): string {
+    const pt = (productType || '').toLowerCase();
+    if (pt.includes('motor')) return 'bi-car-front-fill';
+    if (pt.includes('health')) return 'bi-heart-pulse-fill';
+    if (pt.includes('life')) return 'bi-person-shield';
+    if (pt.includes('property')) return 'bi-house-heart-fill';
+    return 'bi-shield-check';
   }
 }

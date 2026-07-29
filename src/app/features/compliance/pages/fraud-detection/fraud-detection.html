@@ -1,0 +1,75 @@
+<div class="container-fluid py-4">
+    <div class="page-header d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">Fraud Detection & Investigation</h2>
+            <p class="text-muted mb-0">Review submitted claims for potential fraud and assign adjusters upon clearance.</p>
+        </div>
+    </div>
+
+    <div *ngIf="message" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i> {{ message }}
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 font-weight-bold text-dark">Submitted Claims (Fraud Check Required)</h5>
+            <span class="badge bg-secondary">{{ claims.length }} Claims</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Flag ID</th>
+                            <th>Claim ID</th>
+                            <th>Fraud Type</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let c of claims">
+                            <td>
+                                <div class="fw-bold text-dark">#{{ c.fraudFlag!.flagId }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">#{{ c.claimId }}</div>
+                                <div class="fs-8 text-muted">Policy #{{ c.policyId }}</div>
+                            </td>
+                            <td>
+                                <div class="text-dark">{{ c.fraudFlag!.fraudType }}</div>
+                            </td>
+                            <td>
+                                <span class="badge" [ngClass]="{'bg-danger': c.fraudFlag!.severity === 'HIGH', 'bg-warning text-dark': c.fraudFlag!.severity === 'MEDIUM', 'bg-info': c.fraudFlag!.severity === 'LOW'}">
+                                    {{ c.fraudFlag!.severity }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" [ngClass]="getFraudStatusBadgeClass(c.fraudFlag!.status)">
+                                    {{ c.fraudFlag!.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-muted">{{ c.incidentDate }}</div> <!-- using incident date as fallback if createdDate not available -->
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        (click)="investigate(c)">
+                                    <i class="bi bi-search"></i> View Case
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="claims.length === 0 && !loading">
+                            <td colspan="6" class="text-center py-4 text-muted">No submitted claims requiring fraud detection.</td>
+                        </tr>
+                        <tr *ngIf="loading">
+                            <td colspan="6" class="text-center py-4 text-muted">Loading data from backend...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

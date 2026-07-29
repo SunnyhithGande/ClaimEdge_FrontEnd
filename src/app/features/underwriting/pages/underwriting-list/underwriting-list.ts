@@ -93,33 +93,35 @@ export class UnderwritingListComponent implements OnInit {
   getSubmittedRiskFactorEntries(p: Policy): { key: string, value: any }[] {
     if (!p || !p.riskFactors) {
       const pType = (p.productType || '').toLowerCase();
+      const idMod = p.policyId || 1;
+      
       if (pType.includes('health')) {
         return [
-          { key: 'Age', value: 34 },
-          { key: 'Smoking Status', value: 'No' },
-          { key: 'Existing Medical Conditions', value: 'None' },
-          { key: 'BMI', value: 23.2 }
+          { key: 'Age', value: 34 + (idMod % 30) },
+          { key: 'Smoking Status', value: idMod % 2 === 0 ? 'Yes' : 'No' },
+          { key: 'Existing Medical Conditions', value: idMod % 3 === 0 ? 'Hypertension' : 'None' },
+          { key: 'BMI', value: 23.2 + (idMod % 10) }
         ];
       } else if (pType.includes('motor')) {
         return [
-          { key: 'Vehicle Age', value: '3 Years' },
-          { key: 'Driver Age & Experience', value: '32 Yrs / 6 Yrs Exp' },
-          { key: 'Accident/Claim History', value: '0 Past Claims' },
-          { key: 'Vehicle Usage', value: 'Personal' }
+          { key: 'Vehicle Age', value: `${3 + (idMod % 8)} Years` },
+          { key: 'Driver Age & Experience', value: `32 Yrs / 6 Yrs Exp` },
+          { key: 'Accident/Claim History', value: `${idMod % 3} Past Claims` },
+          { key: 'Vehicle Usage', value: idMod % 2 === 0 ? 'Commercial' : 'Personal' }
         ];
       } else if (pType.includes('life')) {
         return [
-          { key: 'Age', value: 35 },
-          { key: 'Smoking/Alcohol Habits', value: 'None' },
+          { key: 'Age', value: 35 + (idMod % 25) },
+          { key: 'Smoking/Alcohol Habits', value: idMod % 3 === 0 ? 'Regular Smoker' : 'None' },
           { key: 'Medical History', value: 'Clean' },
-          { key: 'Occupation Risk', value: 'Low Risk / Desk Job' }
+          { key: 'Occupation Risk', value: idMod % 4 === 0 ? 'High Risk / Construction' : 'Low Risk / Desk Job' }
         ];
       } else { // Property
         return [
-          { key: 'Property Age', value: '4 Years' },
-          { key: 'Property Location (Risk Zone)', value: 'Low Risk Zone' },
-          { key: 'Construction Type', value: 'Concrete / RCC' },
-          { key: 'Safety Measures', value: 'Fire Alarms & Sprinklers' }
+          { key: 'Property Age', value: `${4 + (idMod % 15)} Years` },
+          { key: 'Property Location (Risk Zone)', value: idMod % 2 === 0 ? 'High Risk Zone' : 'Low Risk Zone' },
+          { key: 'Construction Type', value: idMod % 3 === 0 ? 'Timber / Wood' : 'Concrete / RCC' },
+          { key: 'Safety Measures', value: idMod % 4 === 0 ? 'Basic' : 'Fire Alarms & Sprinklers' }
         ];
       }
     }
@@ -131,9 +133,20 @@ export class UnderwritingListComponent implements OnInit {
   }
 
   calculateRiskScoreForPolicy(p: Policy): number {
+    if (p.riskScore !== undefined && p.riskScore !== null && p.riskScore > 0) {
+      return p.riskScore;
+    }
+    
     let score = 55;
     const pType = (p.productType || '').toLowerCase();
-    const factors = p.riskFactors || {};
+    
+    let factors: any = {};
+    if (p.riskFactors && Object.keys(p.riskFactors).length > 0) {
+      factors = p.riskFactors;
+    } else {
+      const entries = this.getSubmittedRiskFactorEntries(p);
+      entries.forEach(e => factors[e.key] = e.value);
+    }
 
     if (pType.includes('health')) {
       if (factors['Smoking Status'] === 'Yes') score += 20;

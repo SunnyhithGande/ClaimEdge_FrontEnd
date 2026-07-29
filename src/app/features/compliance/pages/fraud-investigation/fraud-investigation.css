@@ -1,0 +1,98 @@
+.bg-light {
+    background-color: #f8f9fc !important;
+}
+
+.fs-7 {
+    font-size: 0.875rem;
+}
+
+.fs-8 {
+    font-size: 0.75rem;
+}
+
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.status-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.custom-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.custom-tabs .nav-link:hover {
+    color: #495057;
+    border-bottom-color: #e9ecef;
+}
+
+.custom-tabs .nav-link.active {
+    color: #0d6efd !important;
+    border-bottom: 2px solid #0d6efd;
+    background: transparent;
+}
+
+.custom-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-table td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    vertical-align: middle;
+}
+
+.action-btn {
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
+.hover-primary:not(:disabled):hover {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+    border-color: rgba(13, 110, 253, 0.2) !important;
+}
+
+.hover-success:not(:disabled):hover {
+    background-color: rgba(25, 135, 84, 0.05) !important;
+    border-color: rgba(25, 135, 84, 0.2) !important;
+}
+
+.hover-danger:not(:disabled):hover {
+    background-color: rgba(220, 53, 69, 0.05) !important;
+    border-color: rgba(220, 53, 69, 0.2) !important;
+}
+
+.checklist-item {
+    transition: opacity 0.2s;
+}
+.checklist-item:hover {
+    opacity: 0.8;
+}
+
+/* Timeline */
+.timeline {
+    border-left: 2px solid #e9ecef;
+}
+
+.timeline-item {
+    padding-left: 1.5rem;
+}

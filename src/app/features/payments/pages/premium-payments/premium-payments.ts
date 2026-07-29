@@ -6,6 +6,7 @@ import { PaymentsService } from '../../service/payments.service';
 import { PolicyService } from '../../../policy/services/policy.service';
 import { Policy } from '../../../policy/models/policy.model';
 import { NotificationService } from '../../../notifications/services/notification.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface PaymentScheduleItem {
   paymentId?: number;
@@ -33,6 +34,7 @@ export class PremiumPaymentsComponent implements OnInit {
   private paymentsService = inject(PaymentsService);
   private policyService = inject(PolicyService);
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -56,7 +58,12 @@ export class PremiumPaymentsComponent implements OnInit {
   }
 
   loadDueInvoicesAndPayments(): void {
-    this.policyService.getAllPolicies().subscribe({
+    const isPolicyHolder = this.authService.hasRole('POLICYHOLDER');
+    const policyObservable = isPolicyHolder 
+        ? this.policyService.getPoliciesByUserId(this.authService.getCurrentUserId())
+        : this.policyService.getAllPolicies();
+
+    policyObservable.subscribe({
       next: (allPolicies) => {
         const list = allPolicies || [];
         this.duePolicyInvoices = list.filter(p => {
