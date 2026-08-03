@@ -71,6 +71,10 @@ export class AuditLogsComponent implements OnInit {
     this.applyFilters();
   }
 
+  generateReport(): void {
+    window.print();
+  }
+
   getIconForAction(action: string): string {
     action = action.toLowerCase();
     if (action.includes('submit')) return 'bi-file-earmark-plus';

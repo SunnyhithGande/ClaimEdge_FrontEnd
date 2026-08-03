@@ -132,6 +132,12 @@ export class AssessmentsComponent implements OnInit {
     return 'bg-warning text-dark';
   }
 
+  isClaimProcessed(): boolean {
+    if (!this.selectedClaim) return true; // disable if no claim selected
+    const st = (this.selectedClaim.status || '').toUpperCase();
+    return st.includes('APPROVED') || st.includes('REJECTED') || st.includes('SETTLED') || st.includes('PAID');
+  }
+
   viewDocument(doc: UploadedDoc): void {
     if (doc.url) {
       const win = window.open('', '_blank');

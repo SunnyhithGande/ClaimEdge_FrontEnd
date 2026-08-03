@@ -29,6 +29,7 @@ export class FraudInvestigationComponent implements OnInit {
   message = '';
   isConfirmed = false;
   isCleared = false;
+  isFraudConfirmed = false;
   submitting = false;
 
   adjusterId: string = '';
@@ -49,11 +50,13 @@ export class FraudInvestigationComponent implements OnInit {
       next: (flags) => {
         this.fraudFlag = flags.find(f => f.flagId === this.flagId);
         if (this.fraudFlag) {
-          if (this.fraudFlag.status === 'INVESTIGATED' || this.fraudFlag.status === 'CONFIRMED_FRAUD') {
+          if (this.fraudFlag.status === 'INVESTIGATED' || this.fraudFlag.status === 'CONFIRMED_FRAUD' || this.fraudFlag.status === 'CONFIRMED' || this.fraudFlag.status === 'CLEARED') {
             this.isConfirmed = true;
           }
+          if (this.fraudFlag.status === 'CONFIRMED_FRAUD' || this.fraudFlag.status === 'CONFIRMED') {
+            this.isFraudConfirmed = true;
+          }
           if (this.fraudFlag.status === 'CLEARED') {
-            this.isConfirmed = true;
             this.isCleared = true;
           }
 
@@ -152,6 +155,27 @@ export class FraudInvestigationComponent implements OnInit {
       error: (err) => {
         console.error('Clear failed', err);
         this.message = 'Failed to clear fraud flag.';
+        this.submitting = false;
+      }
+    });
+  }
+
+  confirmFraud(): void {
+    if (this.submitting) return;
+    this.submitting = true;
+
+    this.http.put<any>(`http://localhost:8010/api/fraud/${this.flagId}/confirm`, {
+      confirmedBy: 'System Analyst'
+    }).subscribe({
+      next: (updatedFlag) => {
+        this.fraudFlag = updatedFlag;
+        this.isFraudConfirmed = true;
+        this.message = 'Fraud confirmed successfully.';
+        this.submitting = false;
+      },
+      error: (err) => {
+        console.error('Confirm failed', err);
+        this.message = 'Failed to confirm fraud flag.';
         this.submitting = false;
       }
     });

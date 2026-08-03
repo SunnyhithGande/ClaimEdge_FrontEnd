@@ -47,7 +47,7 @@ export class NotificationService {
   }
 
   dismiss(id: number): Observable<Notification> {
-    return this.http.put<Notification>(`${this.apiUrl}/${id}/dismiss`, {}).pipe(
+    return this.http.delete<Notification>(`${this.apiUrl}/${id}`).pipe(
       catchError(() => of({ notificationId: id, status: 'DISMISSED' } as Notification))
     );
   }

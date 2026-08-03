@@ -139,9 +139,6 @@
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <button class="btn btn-outline-primary" (click)="viewReportDetails(r)">View</button>
-                                <button class="btn btn-outline-danger" (click)="downloadPdf(r)">PDF</button>
-                                <button class="btn btn-outline-success" (click)="downloadExcel(r)">Excel</button>
-                                <button class="btn btn-outline-secondary" (click)="printReport(r)">Print</button>
                                 <button class="btn btn-outline-danger" (click)="deleteReport(r.reportId!)">Delete</button>
                             </div>
                         </td>
@@ -239,9 +236,6 @@
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-outline-danger" (click)="downloadPdf(selectedReport)">Download PDF</button>
-                        <button class="btn btn-outline-success" (click)="downloadExcel(selectedReport)">Download Excel CSV</button>
-                        <button class="btn btn-outline-secondary" (click)="printReport(selectedReport)">Print</button>
                         <button class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
                     </div>
                 </div>

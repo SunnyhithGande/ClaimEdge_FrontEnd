@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import Chart from 'chart.js/auto';
 
 interface FraudFlag {
@@ -24,6 +24,7 @@ interface FraudFlag {
 export class FraudDashboardComponent implements OnInit, AfterViewInit {
 
   private http = inject(HttpClient);
+  private router = inject(Router);
   
   @ViewChild('statusChart') statusChartRef!: ElementRef;
   @ViewChild('trendChart') trendChartRef!: ElementRef;
@@ -101,6 +102,10 @@ export class FraudDashboardComponent implements OnInit, AfterViewInit {
     }).slice(0, 5); // Show latest 5
   }
 
+  goToDetails(flagId: number): void {
+    this.router.navigate(['/compliance/fraud-investigation', flagId]);
+  }
+
   initCharts(): void {
     if (this.statusChart) this.statusChart.destroy();
     if (this.trendChart) this.trendChart.destroy();
@@ -133,13 +138,35 @@ export class FraudDashboardComponent implements OnInit, AfterViewInit {
     }
 
     if (this.trendChartRef && this.trendChartRef.nativeElement) {
+      const now = new Date();
+      const msInWeek = 7 * 24 * 60 * 60 * 1000;
+      let detected = [0, 0, 0, 0, 0];
+      let cleared = [0, 0, 0, 0, 0];
+
+      this.flags.forEach(f => {
+        let weeksAgo = 0;
+        if (f.createdAt) {
+          const diff = now.getTime() - new Date(f.createdAt).getTime();
+          weeksAgo = Math.floor(diff / msInWeek);
+        }
+        
+        if (weeksAgo >= 0 && weeksAgo <= 4) {
+          // Map 4 weeks ago -> index 0, this week -> index 4
+          const index = 4 - weeksAgo;
+          detected[index]++;
+          if (f.status === 'CLEARED') {
+            cleared[index]++;
+          }
+        }
+      });
+
       this.trendChart = new Chart(this.trendChartRef.nativeElement, {
         type: 'line',
         data: {
           labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'This Week'],
           datasets: [{
             label: 'Flags Detected',
-            data: [2, 5, 3, 8, this.totalFlags],
+            data: detected,
             borderColor: '#0d6efd',
             backgroundColor: 'rgba(13, 110, 253, 0.1)',
             tension: 0.4,
@@ -147,7 +174,7 @@ export class FraudDashboardComponent implements OnInit, AfterViewInit {
           },
           {
             label: 'Flags Cleared',
-            data: [1, 3, 2, 6, this.clearedCount],
+            data: cleared,
             borderColor: '#198754',
             backgroundColor: 'rgba(25, 135, 84, 0.1)',
             tension: 0.4,
@@ -169,6 +196,9 @@ export class FraudDashboardComponent implements OnInit, AfterViewInit {
           scales: {
             y: {
               beginAtZero: true,
+              ticks: {
+                precision: 0
+              },
               grid: {
                 color: 'rgba(0,0,0,0.05)'
               }

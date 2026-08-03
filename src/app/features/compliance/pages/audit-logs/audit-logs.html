@@ -1,7 +1,14 @@
 <div class="container-fluid py-4">
-    <div class="page-header mb-4">
-        <h2 class="mb-1">Audit Logs & Workflow History</h2>
-        <p class="text-muted mb-0">Track complete lifecycle of claims from submission to settlement.</p>
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1">Audit Logs & Workflow History</h2>
+            <p class="text-muted mb-0">Track complete lifecycle of claims from submission to settlement.</p>
+        </div>
+        <div>
+            <button class="btn btn-primary shadow-sm" (click)="generateReport()">
+                <i class="bi bi-file-earmark-pdf me-2"></i> Generate Report
+            </button>
+        </div>
     </div>
 
     <!-- Filters -->

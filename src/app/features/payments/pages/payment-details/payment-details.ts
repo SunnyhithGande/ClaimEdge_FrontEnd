@@ -24,11 +24,18 @@ export class PaymentDetailsComponent implements OnInit {
 
   ngOnInit(): void {
 
-    const paymentId = Number(
-      this.route.snapshot.paramMap.get('id')
-    );
+    const paymentId = Number(this.route.snapshot.paramMap.get('id'));
+    const state = history.state;
 
-    this.loadPayment(paymentId);
+    if (state && state.payment) {
+      this.payment = state.payment;
+      // Map method to paymentMethod for the HTML template
+      if (!this.payment.paymentMethod && this.payment.method) {
+        this.payment.paymentMethod = this.payment.method;
+      }
+    } else {
+      this.loadPayment(paymentId);
+    }
 
   }
 

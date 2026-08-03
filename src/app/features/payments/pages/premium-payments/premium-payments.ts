@@ -129,9 +129,9 @@ export class PremiumPaymentsComponent implements OnInit {
     });
   }
 
-  viewPayment(paymentId?: number): void {
-    if (paymentId) {
-      this.router.navigate(['/payments/payment-details', paymentId]);
+  viewPayment(payment: PaymentScheduleItem): void {
+    if (payment.paymentId) {
+      this.router.navigate(['/payments/payment-details', payment.paymentId], { state: { payment: payment } });
     }
   }
 

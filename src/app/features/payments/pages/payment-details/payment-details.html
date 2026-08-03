@@ -86,7 +86,7 @@
                         <span
                             class="status-badge"
                             [ngClass]="{
-                              'paid': payment.status === 'PAID',
+                              'paid': payment.status === 'RECEIVED' || payment.status === 'PAID',
                               'pending': payment.status === 'PENDING',
                               'overdue': payment.status === 'OVERDUE'
                             }">
