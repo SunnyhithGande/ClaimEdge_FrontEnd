@@ -84,7 +84,7 @@ export class AssessmentsComponent implements OnInit {
         // Fetch fraud flags to filter out unassigned fraud claims
         this.http.get<any[]>('http://localhost:8010/api/fraud').subscribe({
           next: (fraudFlags) => {
-            this.submittedClaims = allClaims.filter(c => {
+            this.submittedClaims = allClaims.filter((c: any) => {
                // Check if there is an active fraud flag (status OPEN or CONFIRMED_FRAUD, etc)
                // Actually we just check if it has a fraud flag that hasn't been CLEARED
                const fraud = fraudFlags.find(f => Number(f.claimId) === Number(c.claimId));

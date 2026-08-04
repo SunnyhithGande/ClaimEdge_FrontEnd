@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { PolicyService } from '../../services/policy.service';
 import { Policy } from '../../models/policy.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -23,7 +23,7 @@ export interface AvailablePolicyPlan {
 @Component({
   selector: 'app-policy-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './policy-list.html',
   styleUrls: ['./policy-list.css']
 })
