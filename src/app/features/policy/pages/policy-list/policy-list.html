@@ -323,7 +323,7 @@
             </li>
             <li class="nav-item">
                 <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'POLICY_HOLDERS'" (click)="activeTab = 'POLICY_HOLDERS'">
-                    <i class="bi bi-person-lines-fill me-2 text-primary"></i> Policy Holders Directory ({{ policies.length }})
+                    <i class="bi bi-person-lines-fill me-2 text-primary"></i> Policy Holders Directory ({{ subscribedPoliciesList.length }})
                 </button>
             </li>
         </ul>
@@ -373,11 +373,11 @@
                                     </td>
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE'" (click)="activatePolicy(p.policyId!)" title="Activate Policy">Activate</button>
-                                            <button class="btn btn-outline-info" (click)="renewPolicy(p.policyId!)" title="Renew Policy for 1 Year">Renew</button>
-                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="lapsePolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
-                                            <button class="btn btn-outline-danger" (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
-                                            <button class="btn btn-danger px-2" (click)="deletePolicy(p.policyId!)" title="Delete Policy"><i class="bi bi-trash"></i></button>
+                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE'" (click)="activateMasterPolicy(p.policyId!)" title="Activate Policy">Activate</button>
+                                            <button class="btn btn-outline-info" (click)="renewMasterPolicy(p.policyId!)" title="Renew Policy for 1 Year">Renew</button>
+                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="lapseMasterPolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
+                                            <button class="btn btn-outline-danger" (click)="cancelMasterPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
+                                            <button class="btn btn-danger px-2" (click)="deleteMasterPolicy(p.policyId!)" title="Delete Policy"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -401,7 +401,7 @@
                     <h5 class="mb-0 font-weight-bold text-dark">
                         <i class="bi bi-people-fill text-primary me-2"></i> Subscribed Policyholders Records
                     </h5>
-                    <span class="badge bg-primary px-3 py-2 fs-7">{{ policies.length }} Policyholders</span>
+                    <span class="badge bg-primary px-3 py-2 fs-7">{{ subscribedPoliciesList.length }} Policyholders</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -419,7 +419,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let p of policies">
+                                <tr *ngFor="let p of subscribedPoliciesList">
                                     <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
                                     <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
                                     <td><span class="badge bg-light text-dark border fw-bold">Holder #{{ p.policyHolderId }}</span></td>
@@ -447,7 +447,7 @@
                                         </button>
                                     </td>
                                 </tr>
-                                <tr *ngIf="policies.length === 0">
+                                <tr *ngIf="subscribedPoliciesList.length === 0">
                                     <td colspan="8" class="text-center py-5 text-muted">
                                         No policyholder records found.
                                     </td>

@@ -91,7 +91,7 @@ export class UnderwritingListComponent implements OnInit {
   }
 
   getSubmittedRiskFactorEntries(p: Policy): { key: string, value: any }[] {
-    if (!p || !p.riskFactors) {
+    if (!p || !p.riskFactors || Object.keys(p.riskFactors).length === 0) {
       const pType = (p.productType || '').toLowerCase();
       const idMod = p.policyId || 1;
       

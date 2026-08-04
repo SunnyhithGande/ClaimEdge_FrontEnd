@@ -17,6 +17,7 @@ export interface AvailablePolicyPlan {
   premium: number;
   icon: string;
   features: string[];
+  status?: string;
 }
 
 @Component({
@@ -170,7 +171,29 @@ export class PolicyListComponent implements OnInit {
   }
 
   get adminMasterPolicies(): Policy[] {
-    return this.policies.filter(p => p.status !== 'Pending Underwriting' && p.status !== 'Approved - Pending Payment');
+    const adminId = this.authService.getCurrentUserId();
+    
+    // 1. Inbuilt policies
+    const inbuiltPolicies: Policy[] = this.originalAvailablePlans.map((plan, index) => ({
+      policyId: -(index + 1), // Fake ID
+      policyHolderId: adminId,
+      productType: plan.productType,
+      coverageAmount: plan.coverageAmount,
+      premium: plan.premium,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      status: plan.status || 'Active'
+    }));
+
+    // 2. Admin created policies from DB
+    const adminCreated = this.policies.filter(p => p.policyHolderId === adminId);
+
+    return [...inbuiltPolicies, ...adminCreated];
+  }
+
+  get subscribedPoliciesList(): Policy[] {
+    const adminId = this.authService.getCurrentUserId();
+    return this.policies.filter(p => p.policyHolderId !== adminId);
   }
 
   deduplicatePolicies(list: Policy[]): Policy[] {
@@ -202,7 +225,7 @@ export class PolicyListComponent implements OnInit {
       this.policyService.getAllPolicies().subscribe({
         next: (allData) => {
           const allPolicies = this.deduplicatePolicies(allData || []);
-          const masterPolicies = allPolicies.filter(p => p.policyHolderId !== currentUserId && (p.status?.toUpperCase() === 'ACTIVE' || p.status?.toUpperCase() === 'DRAFT'));
+          const masterPolicies = allPolicies.filter(p => p.policyHolderId !== currentUserId && p.status?.toUpperCase() === 'ACTIVE');
           
           const dynamicPlans = masterPolicies.map(p => ({
             planId: 'ADMIN_PLAN_' + p.policyId,
@@ -348,7 +371,7 @@ export class PolicyListComponent implements OnInit {
 
     const policyObj: Policy = {
       ...this.newPolicy,
-      policyHolderId: this.newPolicy.policyHolderId || currentUserId,
+      policyHolderId: currentUserId, // Master policy belongs to the Admin
       status: statusVal
     };
 
@@ -483,6 +506,146 @@ export class PolicyListComponent implements OnInit {
         this.loadPolicies();
       }
     });
+  }
+
+  activateMasterPolicy(id: number): void {
+    if (!this.isPolicyAdminOrAdmin()) return;
+    let targetProductType = '';
+    
+    if (id < 0) {
+      const index = Math.abs(id) - 1;
+      this.originalAvailablePlans[index].status = 'Active';
+      targetProductType = this.originalAvailablePlans[index].productType;
+      this.showMessage(`✅ Master Policy Activated.`);
+    } else {
+      const p = this.policies.find(pol => pol.policyId === id);
+      targetProductType = p ? p.productType : '';
+      this.policyService.activatePolicy(id).subscribe();
+      this.showMessage(`✅ Master Policy Activated.`);
+    }
+
+    if (targetProductType) {
+      const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
+      subscribed.forEach(subPolicy => {
+         this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
+      });
+    }
+    setTimeout(() => this.loadPolicies(), 1000);
+  }
+
+  lapseMasterPolicy(id: number): void {
+    if (!this.isPolicyAdminOrAdmin()) return;
+    let targetProductType = '';
+    
+    if (id < 0) {
+      const index = Math.abs(id) - 1;
+      this.originalAvailablePlans[index].status = 'Lapsed';
+      targetProductType = this.originalAvailablePlans[index].productType;
+      this.showMessage(`⚠️ Master Policy marked as Lapsed.`);
+    } else {
+      const p = this.policies.find(pol => pol.policyId === id);
+      targetProductType = p ? p.productType : '';
+      this.policyService.cancelPolicy(id).subscribe();
+      this.showMessage(`⚠️ Master Policy marked as Lapsed.`);
+    }
+
+    if (targetProductType) {
+      const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
+      subscribed.forEach(subPolicy => {
+         this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
+           next: () => {
+             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been marked as Lapsed by the Administrator.`);
+           }
+         });
+      });
+    }
+    setTimeout(() => this.loadPolicies(), 1000);
+  }
+
+  renewMasterPolicy(id: number): void {
+    if (!this.isPolicyAdminOrAdmin()) return;
+    let targetProductType = '';
+    
+    if (id < 0) {
+      const index = Math.abs(id) - 1;
+      this.originalAvailablePlans[index].status = 'Active';
+      targetProductType = this.originalAvailablePlans[index].productType;
+      this.showMessage(`🔄 Master Policy Renewed.`);
+    } else {
+      const p = this.policies.find(pol => pol.policyId === id);
+      targetProductType = p ? p.productType : '';
+      this.policyService.renewPolicy(id).subscribe();
+      this.showMessage(`🔄 Master Policy Renewed.`);
+    }
+
+    if (targetProductType) {
+      const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
+      subscribed.forEach(subPolicy => {
+         this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Renewed by the Administrator.`);
+      });
+    }
+    setTimeout(() => this.loadPolicies(), 1000);
+  }
+
+  cancelMasterPolicy(id: number): void {
+    if (!this.isPolicyAdminOrAdmin()) return;
+    let targetProductType = '';
+    
+    if (id < 0) {
+      const index = Math.abs(id) - 1;
+      this.originalAvailablePlans[index].status = 'Cancelled';
+      targetProductType = this.originalAvailablePlans[index].productType;
+      this.showMessage(`🚫 Master Policy (${targetProductType}) Cancelled. Cascading to all subscriptions...`);
+    } else {
+      const p = this.policies.find(pol => pol.policyId === id);
+      targetProductType = p ? p.productType : '';
+      this.policyService.cancelPolicy(id).subscribe();
+      this.showMessage(`🚫 Master Policy #${id} Cancelled. Cascading to all subscriptions...`);
+    }
+
+    if (targetProductType) {
+      const subscribedToCancel = this.subscribedPoliciesList.filter(p => p.productType === targetProductType && p.status !== 'Cancelled' && p.status !== 'CANCELLED');
+      subscribedToCancel.forEach(subPolicy => {
+         this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
+           next: () => {
+             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was cancelled.`);
+           }
+         });
+      });
+    }
+    
+    setTimeout(() => this.loadPolicies(), 1000);
+  }
+
+  deleteMasterPolicy(id: number): void {
+    if (!this.isPolicyAdminOrAdmin()) return;
+    if (!confirm('Are you sure you want to delete this Master Policy? This will also cancel ALL subscribed policies for this product.')) return;
+
+    let targetProductType = '';
+    
+    if (id < 0) {
+       targetProductType = this.originalAvailablePlans[Math.abs(id) - 1]?.productType;
+       this.originalAvailablePlans.splice(Math.abs(id) - 1, 1);
+       this.showMessage(`Master Policy (${targetProductType}) deleted.`);
+    } else {
+       const p = this.policies.find(pol => pol.policyId === id);
+       targetProductType = p ? p.productType : '';
+       this.policyService.deletePolicy(id).subscribe();
+       this.showMessage(`Master Policy #${id} deleted.`);
+    }
+
+    if (targetProductType) {
+      const subscribedToCancel = this.subscribedPoliciesList.filter(p => p.productType === targetProductType && p.status !== 'Cancelled' && p.status !== 'CANCELLED');
+      subscribedToCancel.forEach(subPolicy => {
+         this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
+           next: () => {
+             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was removed.`);
+           }
+         });
+      });
+    }
+
+    setTimeout(() => this.loadPolicies(), 1000);
   }
 
   showMessage(msg: string): void {
