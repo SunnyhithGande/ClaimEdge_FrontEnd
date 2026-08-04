@@ -376,8 +376,9 @@ export class PolicyListComponent implements OnInit {
 
     this.policyService.activatePolicy(id).subscribe({
       next: () => {
+        const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been ACTIVATED by Policy Administrator. Policyholder can now view active coverage.`;
-        this.sendDualNotification(1, notifMsg);
+        this.sendDualNotification(holderId, notifMsg);
         this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
         this.loadPolicies();
       },
@@ -421,8 +422,9 @@ export class PolicyListComponent implements OnInit {
 
     this.policyService.cancelPolicy(id).subscribe({
       next: () => {
+        const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been marked as LAPSED by Policy Administrator.`;
-        this.sendDualNotification(1, notifMsg);
+        this.sendDualNotification(holderId, notifMsg);
         this.showMessage(`⚠️ Policy #${id} marked as Lapsed. Notifications sent.`);
         this.loadPolicies();
       },
@@ -438,8 +440,9 @@ export class PolicyListComponent implements OnInit {
 
     this.policyService.cancelPolicy(id).subscribe({
       next: () => {
+        const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been CANCELLED by Policy Administrator.`;
-        this.sendDualNotification(1, notifMsg);
+        this.sendDualNotification(holderId, notifMsg);
         this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
         this.loadPolicies();
       },
@@ -453,8 +456,9 @@ export class PolicyListComponent implements OnInit {
   renewPolicy(id: number): void {
     this.policyService.renewPolicy(id).subscribe({
       next: () => {
+        const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been RENEWED by Policy Administrator for 1 Year.`;
-        this.sendDualNotification(1, notifMsg);
+        this.sendDualNotification(holderId, notifMsg);
         this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
         this.loadPolicies();
       },

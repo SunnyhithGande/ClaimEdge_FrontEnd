@@ -9,6 +9,11 @@
         </a>
     </div>
 
+    <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> {{ successMessage }}
+        <button type="button" class="btn-close" (click)="closeMessage()" aria-label="Close"></button>
+    </div>
+
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-header bg-white border-bottom p-4">
             <h5 class="mb-0 font-weight-bold text-dark">Claim Incident Information</h5>

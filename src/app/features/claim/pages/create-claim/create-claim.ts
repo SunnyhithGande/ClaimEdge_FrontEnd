@@ -35,6 +35,12 @@ export class CreateClaimComponent implements OnInit {
 
   policies: Policy[] = [];
   submitting = false;
+  successMessage: string = '';
+
+  closeMessage(): void {
+    this.successMessage = '';
+    this.router.navigate(['/claims/list']);
+  }
 
   claimData = {
     policyId: '',
@@ -123,13 +129,21 @@ export class CreateClaimComponent implements OnInit {
         if (res && res.claimId && this.uploadedDocuments.length > 0) {
           localStorage.setItem(`docs_claim_${res.claimId}`, JSON.stringify(this.uploadedDocuments));
         }
-        alert(`Claim Submitted Successfully! Policy #${this.claimData.policyId} attached.`);
-        this.router.navigate(['/claims/list']);
+        this.successMessage = `Claim Submitted Successfully! Policy #${this.claimData.policyId} attached.`;
+        setTimeout(() => {
+          if (this.successMessage) {
+            this.closeMessage();
+          }
+        }, 5000);
       },
       error: () => {
         this.submitting = false;
-        alert(`Claim Submitted Successfully! Policy #${this.claimData.policyId} attached.`);
-        this.router.navigate(['/claims/list']);
+        this.successMessage = `Claim Submitted Successfully! Policy #${this.claimData.policyId} attached.`;
+        setTimeout(() => {
+          if (this.successMessage) {
+            this.closeMessage();
+          }
+        }, 5000);
       }
     });
   }
