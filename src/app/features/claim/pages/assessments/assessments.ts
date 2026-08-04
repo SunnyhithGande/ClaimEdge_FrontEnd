@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 import { ClaimsService } from '../../services/claim.service';
 import { PaymentsService } from '../../../payments/service/payments.service';
@@ -45,6 +46,7 @@ export class AssessmentsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private policyService = inject(PolicyService);
   public authService = inject(AuthService);
+  private http = inject(HttpClient);
 
   assessments: ClaimAssessment[] = [];
   submittedClaims: any[] = [];
@@ -77,11 +79,44 @@ export class AssessmentsComponent implements OnInit {
   loadSubmittedClaims(): void {
     this.claimsService.getAllClaims().subscribe({
       next: (data) => {
-        this.submittedClaims = data || [];
-        if (this.submittedClaims.length > 0) {
-          const currentIdStr = this.assessmentData.claimId || this.submittedClaims[0].claimId.toString();
-          this.onClaimSelect(currentIdStr);
-        }
+        const allClaims = data || [];
+        
+        // Fetch fraud flags to filter out unassigned fraud claims
+        this.http.get<any[]>('http://localhost:8010/api/fraud').subscribe({
+          next: (fraudFlags) => {
+            this.submittedClaims = allClaims.filter(c => {
+               // Check if there is an active fraud flag (status OPEN or CONFIRMED_FRAUD, etc)
+               // Actually we just check if it has a fraud flag that hasn't been CLEARED
+               const fraud = fraudFlags.find(f => Number(f.claimId) === Number(c.claimId));
+               
+               if (fraud) {
+                  if (fraud.status !== 'CLEARED') {
+                      // If it's a fraud claim and NOT cleared, NEVER show it to the adjuster
+                      return false;
+                  } else {
+                      // If it IS cleared, it must be explicitly assigned to an adjuster to appear
+                      return c.assignedAdjusterId != null && c.assignedAdjusterId !== 0 && c.assignedAdjusterId !== '';
+                  }
+               }
+               // If not fraud (or fraud cleared), it appears as usual
+               return true;
+            });
+
+            if (this.submittedClaims.length > 0) {
+              const currentIdStr = this.assessmentData.claimId || this.submittedClaims[0].claimId.toString();
+              this.onClaimSelect(currentIdStr);
+            }
+          },
+          error: (err) => {
+             console.error('Error fetching fraud flags:', err);
+             // Fallback if fraud API fails
+             this.submittedClaims = allClaims;
+             if (this.submittedClaims.length > 0) {
+                const currentIdStr = this.assessmentData.claimId || this.submittedClaims[0].claimId.toString();
+                this.onClaimSelect(currentIdStr);
+             }
+          }
+        });
       },
       error: (err) => {
         console.error('Error fetching claims:', err);
