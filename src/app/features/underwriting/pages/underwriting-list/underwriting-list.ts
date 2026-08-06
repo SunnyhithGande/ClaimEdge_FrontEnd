@@ -91,103 +91,42 @@ export class UnderwritingListComponent implements OnInit {
   }
 
   getSubmittedRiskFactorEntries(p: Policy): { key: string, value: any }[] {
-    if (!p || !p.riskFactors || Object.keys(p.riskFactors).length === 0) {
-      const pType = (p.productType || '').toLowerCase();
-      const idMod = p.policyId || 1;
-      
-      if (pType.includes('health')) {
-        return [
-          { key: 'Age', value: 34 + (idMod % 30) },
-          { key: 'Smoking Status', value: idMod % 2 === 0 ? 'Yes' : 'No' },
-          { key: 'Existing Medical Conditions', value: idMod % 3 === 0 ? 'Hypertension' : 'None' },
-          { key: 'BMI', value: 23.2 + (idMod % 10) }
-        ];
-      } else if (pType.includes('motor')) {
-        return [
-          { key: 'Vehicle Age', value: `${3 + (idMod % 8)} Years` },
-          { key: 'Driver Age & Experience', value: `32 Yrs / 6 Yrs Exp` },
-          { key: 'Accident/Claim History', value: `${idMod % 3} Past Claims` },
-          { key: 'Vehicle Usage', value: idMod % 2 === 0 ? 'Commercial' : 'Personal' }
-        ];
-      } else if (pType.includes('life')) {
-        return [
-          { key: 'Age', value: 35 + (idMod % 25) },
-          { key: 'Smoking/Alcohol Habits', value: idMod % 3 === 0 ? 'Regular Smoker' : 'None' },
-          { key: 'Medical History', value: 'Clean' },
-          { key: 'Occupation Risk', value: idMod % 4 === 0 ? 'High Risk / Construction' : 'Low Risk / Desk Job' }
-        ];
-      } else { // Property
-        return [
-          { key: 'Property Age', value: `${4 + (idMod % 15)} Years` },
-          { key: 'Property Location (Risk Zone)', value: idMod % 2 === 0 ? 'High Risk Zone' : 'Low Risk Zone' },
-          { key: 'Construction Type', value: idMod % 3 === 0 ? 'Timber / Wood' : 'Concrete / RCC' },
-          { key: 'Safety Measures', value: idMod % 4 === 0 ? 'Basic' : 'Fire Alarms & Sprinklers' }
-        ];
-      }
-    }
-
+    if (!p || !p.riskFactors) return [];
     return Object.keys(p.riskFactors).map(k => ({
       key: k,
       value: p.riskFactors![k]
     }));
   }
 
-  calculateRiskScoreForPolicy(p: Policy): number {
-    if (p.riskScore !== undefined && p.riskScore !== null && p.riskScore > 0) {
-      return p.riskScore;
-    }
-    
-    let score = 55;
-    const pType = (p.productType || '').toLowerCase();
-    
-    let factors: any = {};
-    if (p.riskFactors && Object.keys(p.riskFactors).length > 0) {
-      factors = p.riskFactors;
-    } else {
-      const entries = this.getSubmittedRiskFactorEntries(p);
-      entries.forEach(e => factors[e.key] = e.value);
-    }
-
-    if (pType.includes('health')) {
-      if (factors['Smoking Status'] === 'Yes') score += 20;
-      if (factors['Existing Medical Conditions'] && factors['Existing Medical Conditions'] !== 'None') score += 15;
-      if (Number(factors['Age']) > 50) score += 10;
-      if (Number(factors['BMI']) > 28) score += 10;
-    } else if (pType.includes('motor')) {
-      if (factors['Vehicle Usage'] === 'Commercial') score += 20;
-      if (String(factors['Accident/Claim History']).includes('1') || String(factors['Accident/Claim History']).includes('2')) score += 15;
-      if (String(factors['Vehicle Age']).includes('7') || String(factors['Vehicle Age']).includes('8')) score += 10;
-    } else if (pType.includes('life')) {
-      if (String(factors['Smoking/Alcohol Habits']).includes('Regular') || String(factors['Smoking/Alcohol Habits']).includes('Heavy')) score += 25;
-      if (factors['Occupation Risk'] && String(factors['Occupation Risk']).includes('High')) score += 20;
-      if (Number(factors['Age']) > 50) score += 10;
-    } else { // Property
-      if (String(factors['Property Location (Risk Zone)']).includes('High')) score += 25;
-      if (String(factors['Construction Type']).includes('Timber') || String(factors['Construction Type']).includes('Wood')) score += 15;
-      if (String(factors['Safety Measures']).includes('Basic')) score += 10;
-    }
-
-    return Math.min(score, 95);
-  }
-
   openRiskEvaluationModal(p: Policy): void {
     this.selectedPolicy = p;
-    this.calculatedRiskScore = this.calculateRiskScoreForPolicy(p);
-    this.recommendedPremiumInput = p.premium;
 
-    if (this.calculatedRiskScore < 70) {
-      this.underwriterDecision = 'APPROVED';
-      this.underwriterRemarksInput = `Low risk profile (Score: ${this.calculatedRiskScore}). Approved at standard rate.`;
-    } else if (this.calculatedRiskScore < 85) {
-      this.underwriterDecision = 'APPROVED';
-      this.recommendedPremiumInput = Math.round(p.premium * 1.15);
-      this.underwriterRemarksInput = `Medium risk profile (Score: ${this.calculatedRiskScore}). Approved with +15% risk premium adjustment.`;
+    const app = this.applications.find(a => a.policyId === p.policyId);
+    
+    if (app && app.applicationId) {
+      this.service.evaluateRisk(app.applicationId).subscribe({
+        next: (evaluatedApp) => {
+          this.calculatedRiskScore = evaluatedApp.riskScore || 65;
+          this.underwriterDecision = (evaluatedApp.decision === 'PENDING' ? 'APPROVED' : evaluatedApp.decision) || 'APPROVED';
+          this.recommendedPremiumInput = evaluatedApp.premiumRecommended || p.premium;
+          
+          if (this.calculatedRiskScore < 70) {
+            this.underwriterRemarksInput = `Low risk profile (Score: ${this.calculatedRiskScore}). Approved at standard rate.`;
+          } else if (this.calculatedRiskScore < 85) {
+            this.underwriterRemarksInput = `Medium risk profile (Score: ${this.calculatedRiskScore}). Approved with risk premium adjustment.`;
+          } else {
+            this.underwriterRemarksInput = `High risk profile (Score: ${this.calculatedRiskScore}). Declined due to excessive risk factors.`;
+          }
+          
+          this.showRiskModal = true;
+        },
+        error: () => {
+          this.showMessage('Failed to evaluate risk on backend.');
+        }
+      });
     } else {
-      this.underwriterDecision = 'DECLINED';
-      this.underwriterRemarksInput = `High risk profile (Score: ${this.calculatedRiskScore}). Declined due to excessive risk factors.`;
+      this.showMessage('No pending underwriting application found for this policy.');
     }
-
-    this.showRiskModal = true;
   }
 
   submitUnderwriterDecision(decisionChoice: 'APPROVED' | 'DECLINED' | 'REFERRED'): void {
