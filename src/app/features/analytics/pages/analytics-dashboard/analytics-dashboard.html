@@ -128,8 +128,8 @@
                     <tr *ngFor="let r of filteredReports">
                         <td><strong>#{{ r.reportId }}</strong></td>
                         <td>
-                            <div class="fw-bold">{{ r.reportName || r.scope }}</div>
-                            <small class="text-muted">{{ r.scope }}</small>
+                            <div class="fw-bold">{{ r.reportName || r.scope || 'Operations & Policy Analytics' }}</div>
+                            <small class="text-muted">{{ r.scope || 'Comprehensive Dashboard Report' }}</small>
                         </td>
                         <td><span class="badge bg-primary">{{ r.reportType || 'Executive Report' }}</span></td>
                         <td>{{ r.product || 'All Products' }} / {{ r.region || 'All Regions' }}</td>
@@ -200,7 +200,7 @@
                     <button type="button" class="btn-close btn-close-white" (click)="closeDetailModal()"></button>
                 </div>
                 <div class="modal-body">
-                    <h5>{{ selectedReport.reportName || selectedReport.scope }}</h5>
+                    <h5>{{ selectedReport.reportName || selectedReport.scope || 'Operations & Policy Analytics' }}</h5>
                     <p class="text-muted">Type: {{ selectedReport.reportType }} | Generated Date: {{ selectedReport.generatedDate }}</p>
 
                     <div class="row text-center mb-3">

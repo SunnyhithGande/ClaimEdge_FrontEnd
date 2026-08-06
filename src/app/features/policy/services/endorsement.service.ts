@@ -24,17 +24,11 @@ export class EndorsementService {
     return this.http.get<Endorsement[]>(this.apiUrl);
   }
 
-  getEndorsementsByPolicy(policyId: number): Observable<Endorsement[]> {
-    return this.http.get<Endorsement[]>(`${this.apiUrl}/policy/${policyId}`);
-  }
-
   createEndorsement(endorsement: any): Observable<Endorsement> {
     return this.http.post<Endorsement>(this.apiUrl, endorsement);
   }
 
-  updateEndorsement(id: number, endorsement: any): Observable<Endorsement> {
-    return this.http.put<Endorsement>(`${this.apiUrl}/${id}`, endorsement);
-  }
+
 
   deleteEndorsement(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);

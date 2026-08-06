@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ClaimsService } from '../../services/claim.service';
 import { PaymentsService } from '../../../payments/service/payments.service';
@@ -11,7 +12,8 @@ import { AuthService } from '../../../../core/services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule
+    RouterModule,
+    FormsModule
   ],
   templateUrl: './claims-list.html',
   styleUrl: './claims-list.css'
@@ -25,7 +27,10 @@ export class ClaimsListComponent implements OnInit {
   private router = inject(Router);
 
   claims: any[] = [];
+  filteredClaims: any[] = [];
   message: string = '';
+  searchText: string = '';
+  selectedStatus: string = '';
 
   ngOnInit(): void {
     this.loadClaimsFromApi();
@@ -39,6 +44,7 @@ export class ClaimsListComponent implements OnInit {
       this.claimsService.getClaimsByUserId(currentUserId).subscribe({
         next: (response) => {
           this.claims = response || [];
+          this.filterClaims();
         },
         error: (error) => {
           console.warn('Claims API connection notice:', error);
@@ -48,12 +54,23 @@ export class ClaimsListComponent implements OnInit {
       this.claimsService.getAllClaims().subscribe({
         next: (response) => {
           this.claims = response || [];
+          this.filterClaims();
         },
         error: (error) => {
           console.warn('Claims API connection notice:', error);
         }
       });
     }
+  }
+
+  filterClaims(): void {
+    this.filteredClaims = this.claims.filter(c => {
+      const matchSearch = !this.searchText || 
+        c.claimId?.toString().toLowerCase().includes(this.searchText.toLowerCase()) || 
+        c.policyId?.toString().toLowerCase().includes(this.searchText.toLowerCase());
+      const matchStatus = !this.selectedStatus || c.status === this.selectedStatus;
+      return matchSearch && matchStatus;
+    });
   }
 
   viewClaim(claimId: number): void {

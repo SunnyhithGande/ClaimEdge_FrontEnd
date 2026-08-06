@@ -316,8 +316,8 @@
 
         <!-- POLICY ADMINISTRATOR DISTINCT TABS -->
         <ul class="nav nav-pills custom-pills mb-4 bg-white p-2 rounded-4 shadow-sm border">
-            <li class="nav-item">
-                <button class="nav-link fw-bold px-4 py-2" [class.active]="activeTab === 'POLICY_ADMIN'" (click)="activeTab = 'POLICY_ADMIN'">
+            <li class="nav-item" role="presentation" *ngIf="isPolicyAdminOrAdmin()">
+                <button class="nav-link w-100 px-4 py-2 fw-semibold" [class.active]="activeTab === 'POLICY_ADMIN'" (click)="activeTab = 'POLICY_ADMIN'">
                     <i class="bi bi-sliders me-2"></i> Policy Administration ({{ adminMasterPolicies.length }})
                 </button>
             </li>
@@ -347,7 +347,7 @@
                                     <th>Coverage Amount</th>
                                     <th>Annual Premium</th>
                                     <th>Coverage Period</th>
-                                    <th>Lifecycle Status</th>
+                                    <th>Status</th>
                                     <th class="text-end pe-4" *ngIf="isPolicyAdminOrAdmin()">Policy Administrator Actions</th>
                                 </tr>
                             </thead>
@@ -373,11 +373,9 @@
                                     </td>
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-success" *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE'" (click)="activateMasterPolicy(p.policyId!)" title="Activate Policy">Activate</button>
-                                            <button class="btn btn-outline-info" (click)="renewMasterPolicy(p.policyId!)" title="Renew Policy for 1 Year">Renew</button>
-                                            <button class="btn btn-outline-warning" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="lapseMasterPolicy(p.policyId!)" title="Mark as Lapsed">Lapse</button>
+                                            <button class="btn btn-outline-success" *ngIf="p.status === 'Draft' || p.status === 'DRAFT'" (click)="activateMasterPolicy(p.policyId!)" title="Activate Policy">Activate</button>
+                                            <button class="btn btn-outline-info" (click)="renewMasterPolicy(p.policyId!)" title="Renew Policy for 1 Year" [disabled]="p.status === 'Active' || p.status === 'ACTIVE'">Renew</button>
                                             <button class="btn btn-outline-danger" (click)="cancelMasterPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
-                                            <button class="btn btn-danger px-2" (click)="deleteMasterPolicy(p.policyId!)" title="Delete Policy"><i class="bi bi-trash"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -414,8 +412,8 @@
                                     <th>Coverage Amount</th>
                                     <th>Annual Premium</th>
                                     <th>Coverage Term</th>
-                                    <th>Payment & Lifecycle Status</th>
-                                    <th class="text-end pe-4">Status & Actions</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -435,7 +433,7 @@
                                             'bg-info text-white': p.status === 'Approved - Pending Payment',
                                             'bg-warning text-dark': p.status === 'Draft' || p.status === 'DRAFT' || p.status === 'Pending Underwriting',
                                             'bg-secondary': p.status === 'Lapsed' || p.status === 'LAPSED',
-                                            'bg-danger': p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Rejected'
+                                            'bg-danger': p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Rejected' || p.status === 'Declined' || p.status === 'DECLINED'
                                         }">
                                             <i class="bi bi-shield-check me-1" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'"></i>
                                             {{ p.status }}

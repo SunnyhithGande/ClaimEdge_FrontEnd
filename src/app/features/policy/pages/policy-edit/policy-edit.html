@@ -1,0 +1,106 @@
+<div class="edit-container fade-in">
+  <!-- Header -->
+  <div class="edit-header">
+    <div class="d-flex align-items-center">
+      <button class="btn btn-icon-back me-3" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <h2 class="mb-0">Policy Administration</h2>
+        <p class="text-muted mb-0">Manage Master Policy Lifecycle</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="message" class="alert alert-success d-flex align-items-center mb-4 fade-in" role="alert">
+    <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+    <div>{{ message }}</div>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !policy" class="alert alert-danger" role="alert">
+    Policy not found.
+  </div>
+
+  <!-- Content -->
+  <div class="row" *ngIf="!loading && policy">
+    
+    <!-- Details Card -->
+    <div class="col-lg-7">
+      <div class="card premium-card mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0">
+          <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i> Master Policy Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="detail-row">
+            <span class="detail-label">Policy ID</span>
+            <span class="detail-value fw-bold">#{{ policy.policyId }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Product Type</span>
+            <span class="detail-value">{{ policy.productType }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Base Coverage</span>
+            <span class="detail-value">₹{{ policy.coverageAmount | number }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Base Premium</span>
+            <span class="detail-value">₹{{ policy.premium | number }} / yr</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Current Status</span>
+            <span class="badge" 
+                  [ngClass]="{
+                    'bg-success-soft text-success': policy.status?.toUpperCase() === 'ACTIVE',
+                    'bg-warning-soft text-warning': policy.status?.toUpperCase() === 'DRAFT',
+                    'bg-danger-soft text-danger': policy.status?.toUpperCase() === 'CANCELLED' || policy.status?.toUpperCase() === 'LAPSED'
+                  }">
+              {{ policy.status | uppercase }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="col-lg-5">
+      <div class="card premium-card mb-4 border-primary">
+        <div class="card-header bg-transparent border-0 pt-4 pb-0">
+          <h5 class="mb-0"><i class="bi bi-lightning-charge me-2 text-primary"></i> Lifecycle Actions</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-4">
+            Actions performed here will cascade to all active subscriptions of this product.
+          </p>
+
+          <div class="d-grid gap-3">
+            <button class="btn btn-lg btn-success action-btn" 
+                    [disabled]="policy.status?.toUpperCase() === 'ACTIVE'"
+                    (click)="activatePolicy()">
+              <i class="bi bi-check2-circle me-2"></i> Activate Policy
+            </button>
+
+            <button class="btn btn-lg btn-warning action-btn"
+                    [disabled]="policy.status?.toUpperCase() !== 'ACTIVE'"
+                    (click)="renewPolicy()">
+              <i class="bi bi-arrow-repeat me-2"></i> Renew Master Policy
+            </button>
+
+            <button class="btn btn-lg btn-danger action-btn"
+                    [disabled]="policy.status?.toUpperCase() === 'CANCELLED'"
+                    (click)="cancelPolicy()">
+              <i class="bi bi-x-octagon me-2"></i> Cancel / Lapse Policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

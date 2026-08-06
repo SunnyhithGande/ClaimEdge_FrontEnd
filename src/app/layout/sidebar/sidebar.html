@@ -125,23 +125,13 @@
         <!-- Operations Analyst Navigation Menu -->
         <ng-container *ngIf="(hasRole('OPERATIONS') || hasRole('OPERATIONS_ANALYST') || hasRole('OPS')) && !hasRole('ADMIN') && !hasRole('POLICY_ADMIN')">
             <li class="nav-item">
-                <a [routerLink]="'/analytics'" (click)="navigate($event, '/analytics')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-graph-up-arrow"></i> <span>Analytics & Reporting</span>
-                </a>
-            </li>
-            <li class="nav-item">
                 <a [routerLink]="'/dashboard'" (click)="navigate($event, '/dashboard')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                     <i class="bi bi-speedometer2"></i> <span>Operations Dashboard</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a [routerLink]="'/claims/list'" (click)="navigate($event, '/claims/list')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-diagram-3"></i> <span>Claim Pipeline</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a [routerLink]="'/notifications'" (click)="navigate($event, '/notifications')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
-                    <i class="bi bi-bell"></i> <span>Notifications</span>
+                <a [routerLink]="'/analytics'" (click)="navigate($event, '/analytics')" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i> <span>Analytics & Reporting</span>
                 </a>
             </li>
         </ng-container>

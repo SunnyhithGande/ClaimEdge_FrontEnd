@@ -8,6 +8,7 @@ import { IdentityManagementComponent } from './features/identity/pages/identity-
 
 import { PolicyListComponent } from './features/policy/pages/policy-list/policy-list';
 import { PolicyCreateComponent } from './features/policy/pages/policy-create/policy-create';
+import { PolicyEditComponent } from './features/policy/pages/policy-edit/policy-edit';
 import { EndorsementsComponent } from './features/policy/pages/endorsements/endorsements';
 
 import { UnderwritingListComponent } from './features/underwriting/pages/underwriting-list/underwriting-list';
@@ -74,6 +75,12 @@ export const routes: Routes = [
     component: PolicyCreateComponent,
     canActivate: [authGuard, roleGuard],
     data: { expectedRoles: ['POLICYHOLDER', 'POLICY_ADMIN', 'ADMIN'] }
+  },
+  {
+    path: 'policies/edit/:id',
+    component: PolicyEditComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { expectedRoles: ['POLICY_ADMIN', 'ADMIN'] }
   },
   {
     path: 'policies/endorsements',

@@ -89,67 +89,29 @@
             <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">Policy Administrator</span>
         </div>
 
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">POLICY WORKBENCH</small>
-                        <h3 class="fw-bold text-primary mt-2">Policy Administration</h3>
-                        <p class="fs-8 text-muted mb-2">Create, amend, renew, or cancel active policy contracts.</p>
-                        <a routerLink="/policies" class="btn btn-sm btn-primary fw-bold">Open Policy Administration →</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">POLICY ENDORSEMENTS</small>
-                        <h3 class="fw-bold text-success mt-2">Endorsements Queue</h3>
-                        <p class="fs-8 text-muted mb-2">Process coverage modifications, address changes, and policy riders.</p>
-                        <a routerLink="/policies/endorsements" class="btn btn-sm btn-success fw-bold">Manage Policy Endorsements →</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">NOTIFICATIONS & ALERTS</small>
-                        <h3 class="fw-bold text-warning mt-2">System Alerts</h3>
-                        <p class="fs-8 text-muted mb-2">Receive operational and policy change notifications.</p>
-                        <a routerLink="/notifications" class="btn btn-sm btn-warning text-dark fw-bold">View Notifications →</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+
 
         <div class="card border-0 shadow-sm rounded-3">
             <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold">Policy Administration Key Features (4.2 Module)</h5>
+                <h5 class="mb-0 fw-bold">Policy Administration Key Features</h5>
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="p-3 bg-light rounded-3 border">
                             <h6 class="fw-bold text-primary"><i class="bi bi-shield-plus me-1"></i> Issue New Policy</h6>
                             <small class="text-muted d-block mb-2">Issue Life, Health, Motor, or Property policies with coverage & premiums.</small>
                             <a routerLink="/policies" class="btn btn-sm btn-outline-primary w-100 fw-bold">Create Policy</a>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="p-3 bg-light rounded-3 border">
-                            <h6 class="fw-bold text-success"><i class="bi bi-pencil-square me-1"></i> Amend Coverage</h6>
-                            <small class="text-muted d-block mb-2">Modify policy coverage limits, insured details, and premium rates.</small>
-                            <a routerLink="/policies" class="btn btn-sm btn-outline-success w-100 fw-bold">Amend Policy</a>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="p-3 bg-light rounded-3 border">
                             <h6 class="fw-bold text-warning"><i class="bi bi-arrow-repeat me-1"></i> Policy Renewal</h6>
                             <small class="text-muted d-block mb-2">Extend validity dates for 1 year and transition status from Lapsed to Active.</small>
                             <a routerLink="/policies" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">Renew Policy</a>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="p-3 bg-light rounded-3 border">
                             <h6 class="fw-bold text-danger"><i class="bi bi-file-earmark-diff me-1"></i> Policy Endorsement</h6>
                             <small class="text-muted d-block mb-2">Record beneficiary updates, vehicle swaps, rider additions, and address changes.</small>
@@ -251,40 +213,46 @@
     <!-- OPERATIONS ANALYST DASHBOARD VIEW -->
     <!-- ============================================================ -->
     <ng-container *ngIf="userRole === 'OPERATIONS' || userRole === 'OPS' || userRole === 'OPERATIONS_ANALYST'">
-        <div class="alert alert-dark shadow-sm border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+        <!-- Simple Page Header like Analytics -->
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
             <div>
-                <h4 class="alert-heading mb-1 fw-bold text-white">Operations & Pipeline Dashboard, {{ userName }}</h4>
-                <p class="mb-0 text-light">Monitor claims pipeline throughput, track SLA compliance, and handle operational exceptions.</p>
+                <h3 class="mb-1 fw-bold">Operations Dashboard</h3>
+                <p class="text-muted mb-0">Welcome back, {{ userName }}! Navigate to your analytics tools below.</p>
             </div>
-            <span class="badge bg-secondary fs-6 px-3 py-2 rounded-pill">Operations</span>
         </div>
 
-        <div class="row g-4 mb-4">
+        <div class="row g-4">
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">CLAIM PIPELINE</small>
-                        <h3 class="fw-bold text-primary mt-2">Processing Flow</h3>
-                        <a routerLink="/claims/list" class="btn btn-sm btn-primary mt-2">View Pipeline</a>
+                <div class="card p-4 shadow-sm border" style="cursor: pointer;" routerLink="/analytics">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded text-primary me-3">
+                            <i class="bi bi-graph-up-arrow fs-4"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">Analytics & Reporting</h5>
                     </div>
+                    <p class="text-muted mb-0">View total claims, premiums collected, active policies, and system-wide loss ratios.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">SLA MONITORING</small>
-                        <h3 class="fw-bold text-info mt-2">Turnaround Time</h3>
-                        <a routerLink="/analytics" class="btn btn-sm btn-info text-white mt-2">SLA Metrics</a>
+                <div class="card p-4 shadow-sm border" style="cursor: pointer;" routerLink="/analytics">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded text-success me-3">
+                            <i class="bi bi-file-earmark-text fs-4"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">Executive Reports</h5>
                     </div>
+                    <p class="text-muted mb-0">Access generated dashboard reports and view comprehensive operational performance.</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-body">
-                        <small class="text-muted fw-bold">EXCEPTIONS</small>
-                        <h3 class="fw-bold text-danger mt-2">Exception Review</h3>
-                        <a routerLink="/fraud-detection" class="btn btn-sm btn-outline-danger mt-2">Review Exceptions</a>
+                <div class="card p-4 shadow-sm border" style="cursor: pointer;" routerLink="/analytics">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded text-warning me-3">
+                            <i class="bi bi-speedometer2 fs-4"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">KPI Metrics</h5>
                     </div>
+                    <p class="text-muted mb-0">Track system turnaround times, product distribution metrics, and SLA compliance.</p>
                 </div>
             </div>
         </div>

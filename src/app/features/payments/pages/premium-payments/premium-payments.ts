@@ -82,7 +82,7 @@ export class PremiumPaymentsComponent implements OnInit {
           productType: p.productType,
           amount: p.premium,
           paymentDate: new Date().toISOString().split('T')[0],
-          method: 'Card',
+          method: localStorage.getItem(`payment_method_${p.policyId}`) || 'Card',
           status: ((p.status || '').toUpperCase() === 'ACTIVE') ? 'RECEIVED' : 'PENDING'
         }));
 
@@ -97,6 +97,7 @@ export class PremiumPaymentsComponent implements OnInit {
   }
 
   processSchedulePayment(inv: Policy, method: string): void {
+    localStorage.setItem(`payment_method_${inv.policyId}`, method);
     inv.status = 'Active';
     this.policyService.activatePolicy(inv.policyId!).subscribe({
       next: () => {

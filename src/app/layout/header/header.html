@@ -29,7 +29,7 @@
     <div class="header-right d-flex align-items-center gap-3">
  
         <!-- Bright Yellow Notification Bell Icon (Navigates to /notifications) -->
-        <a *ngIf="userRole !== 'COMPLIANCE' && userRole !== 'FRAUD_ANALYST' && userRole !== 'POLICY_ADMIN' && userRole !== 'UNDERWRITER' && userRole !== 'ADJUSTER'" routerLink="/notifications" class="notification-area text-decoration-none position-relative d-flex align-items-center justify-content-center p-2 me-1" title="View Notifications">
+        <a *ngIf="userRole !== 'COMPLIANCE' && userRole !== 'FRAUD_ANALYST' && userRole !== 'POLICY_ADMIN' && userRole !== 'UNDERWRITER' && userRole !== 'ADJUSTER' && userRole !== 'OPERATIONS' && userRole !== 'OPERATIONS_ANALYST' && userRole !== 'OPS'" routerLink="/notifications" class="notification-area text-decoration-none position-relative d-flex align-items-center justify-content-center p-2 me-1" title="View Notifications">
             <!-- Bright Yellow Bell SVG Matching Image 1 -->
             <svg width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -79,12 +79,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="py-1">
-                    <a *ngIf="userRole !== 'COMPLIANCE' && userRole !== 'FRAUD_ANALYST' && userRole !== 'POLICY_ADMIN' && userRole !== 'UNDERWRITER' && userRole !== 'ADJUSTER'" routerLink="/notifications" class="dropdown-item text-dark d-flex align-items-center gap-2 py-2 px-3 fs-7 text-decoration-none" (click)="closeProfileMenu()">
+                <div class="py-1 border-bottom" *ngIf="userRole !== 'COMPLIANCE' && userRole !== 'FRAUD_ANALYST' && userRole !== 'POLICY_ADMIN' && userRole !== 'UNDERWRITER' && userRole !== 'ADJUSTER' && userRole !== 'OPERATIONS' && userRole !== 'OPERATIONS_ANALYST' && userRole !== 'OPS'">
+                    <a routerLink="/notifications" class="dropdown-item text-dark d-flex align-items-center gap-2 py-2 px-3 fs-7 text-decoration-none" (click)="closeProfileMenu()">
                         <i class="bi bi-bell text-warning fs-6"></i> Notifications
                     </a>
                 </div>
-                <div class="border-top pt-1 mt-1">
+                <div class="py-1">
                     <button class="dropdown-item text-danger d-flex align-items-center gap-2 py-2 px-3 fw-bold fs-7 w-100 text-start border-0 bg-transparent" (click)="signOut()">
                         <i class="bi bi-box-arrow-right fs-6"></i> Sign Out
                     </button>

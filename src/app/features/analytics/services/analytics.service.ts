@@ -56,9 +56,7 @@ export class AnalyticsService {
     return this.http.post<InsuranceReport>(`${this.apiUrl}/generate`, payload || {});
   }
 
-  getReport(id: number): Observable<InsuranceReport> {
-    return this.http.get<InsuranceReport>(`${this.apiUrl}/${id}`);
-  }
+
 
   deleteReport(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);

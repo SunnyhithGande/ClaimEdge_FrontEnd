@@ -81,10 +81,16 @@ export class AssessmentsComponent implements OnInit {
       next: (data) => {
         const allClaims = data || [];
         
+        // Filter out approved, rejected, or settled claims so only pending/review claims show up
+        const activeClaims = allClaims.filter((c: any) => {
+           const st = (c.status || '').toUpperCase();
+           return st.includes('SUBMITTED') || st.includes('REVIEW') || st.includes('PENDING');
+        });
+        
         // Fetch fraud flags to filter out unassigned fraud claims
         this.http.get<any[]>('http://localhost:8010/api/fraud').subscribe({
           next: (fraudFlags) => {
-            this.submittedClaims = allClaims.filter((c: any) => {
+            this.submittedClaims = activeClaims.filter((c: any) => {
                // Check if there is an active fraud flag (status OPEN or CONFIRMED_FRAUD, etc)
                // Actually we just check if it has a fraud flag that hasn't been CLEARED
                const fraud = fraudFlags.find(f => Number(f.claimId) === Number(c.claimId));
@@ -110,7 +116,7 @@ export class AssessmentsComponent implements OnInit {
           error: (err) => {
              console.error('Error fetching fraud flags:', err);
              // Fallback if fraud API fails
-             this.submittedClaims = allClaims;
+             this.submittedClaims = activeClaims;
              if (this.submittedClaims.length > 0) {
                 const currentIdStr = this.assessmentData.claimId || this.submittedClaims[0].claimId.toString();
                 this.onClaimSelect(currentIdStr);

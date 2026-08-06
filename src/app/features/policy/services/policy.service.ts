@@ -25,6 +25,8 @@ export class PolicyService {
     return this.http.get<Policy>(`${this.apiUrl}/get/${id}`);
   }
 
+
+
   createPolicy(policy: Policy): Observable<any> {
     return this.http.post(`${this.apiUrl}/create`, policy);
   }

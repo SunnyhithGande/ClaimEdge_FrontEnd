@@ -148,8 +148,10 @@ export class PolicyListComponent implements OnInit {
 
     if (this.isPolicyHolder) {
       this.activeTab = 'MY_POLICIES';
-    } else {
+    } else if (this.isPolicyAdminOrAdmin()) {
       this.activeTab = 'POLICY_ADMIN';
+    } else {
+      this.activeTab = 'POLICY_HOLDERS';
     }
 
     this.loadPolicies();
@@ -225,7 +227,11 @@ export class PolicyListComponent implements OnInit {
       this.policyService.getAllPolicies().subscribe({
         next: (allData) => {
           const allPolicies = this.deduplicatePolicies(allData || []);
-          const masterPolicies = allPolicies.filter(p => p.policyHolderId !== currentUserId && p.status?.toUpperCase() === 'ACTIVE');
+          const masterPolicies = allPolicies.filter(p => 
+            p.policyHolderId !== currentUserId && 
+            p.status?.toUpperCase() === 'ACTIVE' &&
+            (!p.riskFactors || Object.keys(p.riskFactors).length === 0)
+          );
           
           const dynamicPlans = masterPolicies.map(p => ({
             planId: 'ADMIN_PLAN_' + p.policyId,
@@ -508,6 +514,7 @@ export class PolicyListComponent implements OnInit {
     });
   }
 
+
   activateMasterPolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
     let targetProductType = '';
@@ -528,35 +535,6 @@ export class PolicyListComponent implements OnInit {
       const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
       subscribed.forEach(subPolicy => {
          this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
-      });
-    }
-    setTimeout(() => this.loadPolicies(), 1000);
-  }
-
-  lapseMasterPolicy(id: number): void {
-    if (!this.isPolicyAdminOrAdmin()) return;
-    let targetProductType = '';
-    
-    if (id < 0) {
-      const index = Math.abs(id) - 1;
-      this.originalAvailablePlans[index].status = 'Lapsed';
-      targetProductType = this.originalAvailablePlans[index].productType;
-      this.showMessage(`⚠️ Master Policy marked as Lapsed.`);
-    } else {
-      const p = this.policies.find(pol => pol.policyId === id);
-      targetProductType = p ? p.productType : '';
-      this.policyService.cancelPolicy(id).subscribe();
-      this.showMessage(`⚠️ Master Policy marked as Lapsed.`);
-    }
-
-    if (targetProductType) {
-      const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
-      subscribed.forEach(subPolicy => {
-         this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
-           next: () => {
-             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been marked as Lapsed by the Administrator.`);
-           }
-         });
       });
     }
     setTimeout(() => this.loadPolicies(), 1000);
