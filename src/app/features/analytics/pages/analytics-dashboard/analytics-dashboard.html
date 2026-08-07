@@ -165,12 +165,7 @@
                             <label class="form-label">Report Scope / Title</label>
                             <input type="text" class="form-control" [(ngModel)]="genRequest.reportScope" name="reportScope" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Report Type</label>
-                            <select class="form-select" [(ngModel)]="genRequest.reportType" name="reportType" required>
-                                <option *ngFor="let t of reportTypesList" [value]="t">{{ t }}</option>
-                            </select>
-                        </div>
+
                         <div class="mb-3">
                             <label class="form-label">Insurance Product</label>
                             <select class="form-select" [(ngModel)]="genRequest.product" name="product">
@@ -207,25 +202,25 @@
                         <div class="col-md-3">
                             <div class="p-2 border rounded">
                                 <small class="text-muted">Total Claims</small>
-                                <div class="fw-bold fs-5">{{ selectedReport.totalClaims || kpis.totalClaims }}</div>
+                                <div class="fw-bold fs-5">{{ selectedReport.totalClaims }}</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="p-2 border rounded">
                                 <small class="text-muted">Total Claim Amount</small>
-                                <div class="fw-bold fs-5">₹{{ (selectedReport.totalClaimAmount || kpis.totalClaimValue) | number }}</div>
+                                <div class="fw-bold fs-5">₹{{ selectedReport.totalClaimAmount | number }}</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="p-2 border rounded">
                                 <small class="text-muted">Premium Collected</small>
-                                <div class="fw-bold fs-5 text-success">₹{{ (selectedReport.totalPremiumCollected || kpis.totalPremiumCollected) | number }}</div>
+                                <div class="fw-bold fs-5 text-success">₹{{ selectedReport.totalPremiumCollected | number }}</div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="p-2 border rounded">
                                 <small class="text-muted">Loss Ratio</small>
-                                <div class="fw-bold fs-5 text-danger">{{ selectedReport.lossRatio || kpis.lossRatioPercent }}%</div>
+                                <div class="fw-bold fs-5 text-danger">{{ selectedReport.lossRatio | number:'1.0-2' }}%</div>
                             </div>
                         </div>
                     </div>

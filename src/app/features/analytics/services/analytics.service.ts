@@ -61,20 +61,4 @@ export class AnalyticsService {
   deleteReport(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
-
-  getClaimsData(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/claims`);
-  }
-
-  getPoliciesData(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/policies`);
-  }
-
-  getDisbursementsData(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/payments/disbursements`);
-  }
-
-  getPremiumsData(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/payments/premium-payments`);
-  }
 }

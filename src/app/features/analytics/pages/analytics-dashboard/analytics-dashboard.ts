@@ -76,11 +76,10 @@ export class AnalyticsDashboardComponent implements OnInit {
 
   productsList = ['ALL', 'Motor Insurance', 'Health Insurance', 'Life Insurance', 'Property Insurance'];
   regionsList = ['ALL', 'North Zone', 'South Zone', 'East Zone', 'West Zone', 'Central Zone'];
-  reportTypesList = ['Executive Report', 'Claims Report', 'Premium Report', 'SLA Report', 'Adjuster Performance Report', 'Loss Ratio Report'];
+
 
   ngOnInit(): void {
     this.loadUserReports();
-    this.calculateRealUserMetrics();
   }
 
   get userRole(): string {
@@ -101,6 +100,7 @@ export class AnalyticsDashboardComponent implements OnInit {
     this.analyticsService.getAllReports().subscribe({
       next: (backendData) => {
         this.reports = backendData || [];
+        this.mapKpisFromLatestReport();
         this.applyFilters();
       },
       error: () => {
@@ -110,77 +110,27 @@ export class AnalyticsDashboardComponent implements OnInit {
     });
   }
 
-  calculateRealUserMetrics(): void {
-    this.policyService.getAllPolicies().subscribe({
-      next: (apiPolicies) => {
-        this.processUserPoliciesAndClaims(apiPolicies || []);
-      },
-      error: () => {
-        this.processUserPoliciesAndClaims([]);
-      }
-    });
-  }
-
-  processUserPoliciesAndClaims(policies: Policy[]): void {
-    const activePolicies = policies.filter(p => (p.status || '').toUpperCase() === 'ACTIVE');
-    this.kpis.activePolicies = activePolicies.length > 0 ? activePolicies.length : policies.length;
-
-    const totalPremium = policies.reduce((sum, p) => sum + (p.premium || 0), 0);
-    this.kpis.totalPremiumCollected = totalPremium;
-
-    this.analyticsService.getClaimsData().subscribe({
-      next: (claims) => {
-        this.computeRealClaimMetrics(claims || [], policies);
-      },
-      error: () => {
-        this.computeRealClaimMetrics([], policies);
-      }
-    });
-  }
-
-  computeRealClaimMetrics(claims: any[], policies: Policy[]): void {
-    this.kpis.totalClaims = claims.length;
-    this.kpis.totalClaimValue = claims.reduce((sum, c) => sum + (c.claimAmount || 0), 0);
-
-    let pending = 0;
-    let approved = 0;
-    let rejected = 0;
-
-    claims.forEach(c => {
-      const st = (c.status || '').toUpperCase();
-      if (st.includes('APPROVED')) approved++;
-      else if (st.includes('REJECTED')) rejected++;
-      else pending++;
-    });
-
-    this.kpis.pendingClaims = pending;
+  mapKpisFromLatestReport(): void {
+    if (this.reports.length === 0) return;
+    const latest = this.reports[this.reports.length - 1]; 
+    this.kpis.totalClaims = latest.totalClaims || 0;
+    this.kpis.totalClaimValue = latest.totalClaimAmount || 0;
+    this.kpis.totalPremiumCollected = latest.totalPremiumCollected || 0;
+    this.kpis.activePolicies = latest.totalPolicies || 0; 
+    this.kpis.avgSettlementTimeDays = latest.totalClaims && latest.totalClaims > 0 ? 5.5 : 0;
+    this.kpis.lossRatioPercent = latest.lossRatio ? Math.round(latest.lossRatio * 100) / 100 : 0;
+    this.kpis.slaAdherencePercent = latest.totalClaims && latest.totalClaims > 0 ? Math.round(((latest.approvedClaims || 0) / latest.totalClaims) * 1000) / 10 : 0;
+    
+    const approved = latest.approvedClaims || 0;
+    const rejected = latest.rejectedClaims || 0;
+    const total = latest.totalClaims || 0;
+    this.kpis.pendingClaims = total - (approved + rejected);
+    
     this.kpis.approvedClaims = approved;
     this.kpis.rejectedClaims = rejected;
-
-    const totalClaimVal = this.kpis.totalClaimValue;
-    const totalPremVal = this.kpis.totalPremiumCollected;
-    const lossRatio = totalPremVal > 0 ? (totalClaimVal / totalPremVal) * 100 : 0;
-    this.kpis.lossRatioPercent = Math.round(lossRatio * 100) / 100;
-
-    this.kpis.avgSettlementTimeDays = claims.length > 0 ? 5.5 : 0;
-    const withinSla = Math.max(0, approved);
-    this.kpis.slaAdherencePercent = claims.length > 0 ? Math.round((withinSla / claims.length) * 1000) / 10 : 0;
-
-    const productMap = new Map<string, number>();
-    policies.forEach(p => {
-      const prod = p.productType || 'Motor Insurance';
-      productMap.set(prod, (productMap.get(prod) || 0) + 1);
-    });
-
-    const totalPolCount = policies.length || 1;
-    this.productClaims = Array.from(productMap.entries()).map(([product, count]) => ({
-      product,
-      count,
-      percent: Math.round((count / totalPolCount) * 100)
-    }));
-
-    this.applyFilters();
   }
+
+
 
   applyFilters(): void {
     const term = this.searchTerm.toLowerCase().trim();
@@ -262,59 +212,6 @@ export class AnalyticsDashboardComponent implements OnInit {
     });
   }
 
-  // File Exports
-  downloadPdf(report: InsuranceReport): void {
-    const content = `
-ClaimEdge Insurance Analytics & Reporting
-=========================================
-Report ID: #${report.reportId || 1}
-Report Name: ${report.reportName || 'Executive Operations Report'}
-Report Scope: ${report.scope || 'System-Wide Analysis'}
-Report Type: ${report.reportType || 'Executive Summary'}
-Generated Date: ${report.generatedDate || new Date().toISOString().split('T')[0]}
-Generated By: ${report.generatedBy || this.userName}
-Status: ${report.status || 'COMPLETED'}
-
-SUMMARY METRICS:
------------------------------------------
-Total Claims: ${report.totalClaims || this.kpis.totalClaims}
-Total Claim Value: ₹${(report.totalClaimAmount || this.kpis.totalClaimValue).toLocaleString()}
-Total Premium Collected: ₹${(report.totalPremiumCollected || this.kpis.totalPremiumCollected).toLocaleString()}
-Loss Ratio: ${report.lossRatio || this.kpis.lossRatioPercent}%
-SLA Adherence: ${report.slaPercentage || this.kpis.slaAdherencePercent}%
-Average Settlement Time: ${report.avgSettlementTime || this.kpis.avgSettlementTimeDays} Days
-
-NOTES:
-${report.notes || 'Generated from User Modules.'}
-`;
-
-    const blob = new Blob([content], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Insurance_Report_${report.reportId || 1}.pdf`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    this.showMessage(`📥 PDF Report #${report.reportId || 1} Downloaded!`);
-  }
-
-  downloadExcel(report: InsuranceReport): void {
-    const csvContent = `Report ID,Report Name,Scope,Type,Generated Date,Generated By,Total Claims,Total Claim Value,Premium Collected,Loss Ratio,SLA %,Avg Settlement Days
-#${report.reportId || 1},"${report.reportName || 'Executive Report'}","${report.scope || 'System-Wide'}","${report.reportType || 'Executive'}",${report.generatedDate || ''},"${report.generatedBy || ''}",${report.totalClaims || this.kpis.totalClaims},${report.totalClaimAmount || this.kpis.totalClaimValue},${report.totalPremiumCollected || this.kpis.totalPremiumCollected},${report.lossRatio || this.kpis.lossRatioPercent}%,${report.slaPercentage || this.kpis.slaAdherencePercent}%,${report.avgSettlementTime || this.kpis.avgSettlementTimeDays}`;
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Insurance_Report_${report.reportId || 1}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    this.showMessage(`📊 Excel CSV Report #${report.reportId || 1} Downloaded!`);
-  }
-
-  printReport(report: InsuranceReport): void {
-    window.print();
-  }
 
   showMessage(msg: string): void {
     this.message = msg;

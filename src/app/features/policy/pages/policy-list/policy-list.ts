@@ -138,9 +138,7 @@ export class PolicyListComponent implements OnInit {
 
   statusOptions = [
     'Draft',
-    'Active',
-    'Lapsed',
-    'Cancelled'
+    'Active'
   ];
 
   ngOnInit(): void {
@@ -418,52 +416,6 @@ export class PolicyListComponent implements OnInit {
     });
   }
 
-  amendPolicy(p: Policy): void {
-    if (!this.isPolicyAdminOrAdmin()) {
-      alert('Access Denied: Only Policy Administrator can amend policies.');
-      return;
-    }
-
-    const newCov = prompt(`Amend Policy #${p.policyId} Coverage Amount (₹):`, p.coverageAmount.toString());
-    if (!newCov) return;
-    const newPrem = prompt(`Amend Policy #${p.policyId} Annual Premium (₹):`, p.premium.toString());
-    if (!newPrem) return;
-
-    p.coverageAmount = Number(newCov);
-    p.premium = Number(newPrem);
-
-    this.policyService.updatePolicy(p.policyId!, p).subscribe({
-      next: () => {
-        const notifMsg = `Policy Administrator amended Policy #${p.policyId} (${p.productType}): New Coverage ₹${p.coverageAmount}, Premium ₹${p.premium}.`;
-        this.sendDualNotification(p.policyHolderId || 1, notifMsg);
-        this.showMessage(`✅ Policy #${p.policyId} Amended Successfully! Notifications sent.`);
-        this.loadPolicies();
-      },
-      error: () => {
-        this.showMessage(`✅ Policy #${p.policyId} Amended Successfully! Notifications sent.`);
-        this.loadPolicies();
-      }
-    });
-  }
-
-  lapsePolicy(id: number): void {
-    if (!this.isPolicyAdminOrAdmin()) return;
-
-    this.policyService.cancelPolicy(id).subscribe({
-      next: () => {
-        const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
-        const notifMsg = `Policy #${id} has been marked as LAPSED by Policy Administrator.`;
-        this.sendDualNotification(holderId, notifMsg);
-        this.showMessage(`⚠️ Policy #${id} marked as Lapsed. Notifications sent.`);
-        this.loadPolicies();
-      },
-      error: () => {
-        this.showMessage(`⚠️ Policy #${id} marked as Lapsed.`);
-        this.loadPolicies();
-      }
-    });
-  }
-
   cancelPolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
 
@@ -497,23 +449,6 @@ export class PolicyListComponent implements OnInit {
       }
     });
   }
-
-  deletePolicy(id: number): void {
-    if (!this.isPolicyAdminOrAdmin()) return;
-    if (!confirm('Are you sure you want to delete policy #' + id + '?')) return;
-
-    this.policyService.deletePolicy(id).subscribe({
-      next: () => {
-        this.showMessage(`Policy #${id} deleted permanently.`);
-        this.loadPolicies();
-      },
-      error: () => {
-        this.showMessage(`Policy #${id} deleted permanently.`);
-        this.loadPolicies();
-      }
-    });
-  }
-
 
   activateMasterPolicy(id: number): void {
     if (!this.isPolicyAdminOrAdmin()) return;
@@ -595,36 +530,6 @@ export class PolicyListComponent implements OnInit {
     setTimeout(() => this.loadPolicies(), 1000);
   }
 
-  deleteMasterPolicy(id: number): void {
-    if (!this.isPolicyAdminOrAdmin()) return;
-    if (!confirm('Are you sure you want to delete this Master Policy? This will also cancel ALL subscribed policies for this product.')) return;
-
-    let targetProductType = '';
-    
-    if (id < 0) {
-       targetProductType = this.originalAvailablePlans[Math.abs(id) - 1]?.productType;
-       this.originalAvailablePlans.splice(Math.abs(id) - 1, 1);
-       this.showMessage(`Master Policy (${targetProductType}) deleted.`);
-    } else {
-       const p = this.policies.find(pol => pol.policyId === id);
-       targetProductType = p ? p.productType : '';
-       this.policyService.deletePolicy(id).subscribe();
-       this.showMessage(`Master Policy #${id} deleted.`);
-    }
-
-    if (targetProductType) {
-      const subscribedToCancel = this.subscribedPoliciesList.filter(p => p.productType === targetProductType && p.status !== 'Cancelled' && p.status !== 'CANCELLED');
-      subscribedToCancel.forEach(subPolicy => {
-         this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
-           next: () => {
-             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was removed.`);
-           }
-         });
-      });
-    }
-
-    setTimeout(() => this.loadPolicies(), 1000);
-  }
 
   showMessage(msg: string): void {
     this.message = msg;

@@ -374,8 +374,7 @@
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group btn-group-sm">
                                             <button class="btn btn-outline-success" *ngIf="p.status === 'Draft' || p.status === 'DRAFT'" (click)="activateMasterPolicy(p.policyId!)" title="Activate Policy">Activate</button>
-                                            <button class="btn btn-outline-info" (click)="renewMasterPolicy(p.policyId!)" title="Renew Policy for 1 Year" [disabled]="p.status === 'Active' || p.status === 'ACTIVE'">Renew</button>
-                                            <button class="btn btn-outline-danger" (click)="cancelMasterPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
+                                            <button class="btn btn-outline-danger" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="cancelMasterPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -413,6 +412,7 @@
                                     <th>Annual Premium</th>
                                     <th>Coverage Term</th>
                                     <th>Status</th>
+                                    <th class="text-end pe-4" *ngIf="isPolicyAdminOrAdmin()">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -438,9 +438,29 @@
                                             {{ p.status }}
                                         </span>
                                     </td>
+                                    <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
+                                        <div class="btn-group shadow-sm">
+                                            <button *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE' && p.status !== 'Cancelled' && p.status !== 'CANCELLED' && p.status !== 'Lapsed' && p.status !== 'LAPSED'" 
+                                                    class="btn btn-sm btn-outline-success font-weight-bold" 
+                                                    (click)="activatePolicy(p.policyId!)" title="Activate Policy"
+                                                    [disabled]="p.status === 'Declined' || p.status === 'DECLINED' || p.status === 'Rejected' || p.status === 'REJECTED' || p.status?.includes('Pending Payment') || p.status?.includes('PENDING PAYMENT') || p.status?.includes('Pending Underwriting') || p.status?.includes('PENDING UNDERWRITING')">
+                                                <i class="bi bi-check-circle me-1"></i> Activate
+                                            </button>
+                                            <button *ngIf="p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Lapsed' || p.status === 'LAPSED'" 
+                                                    class="btn btn-sm btn-outline-primary font-weight-bold" 
+                                                    (click)="renewPolicy(p.policyId!)" title="Renew Policy">
+                                                <i class="bi bi-arrow-repeat me-1"></i> Renew
+                                            </button>
+                                            <button *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" 
+                                                    class="btn btn-sm btn-outline-danger font-weight-bold" 
+                                                    (click)="cancelPolicy(p.policyId!)" title="Cancel Policy">
+                                                <i class="bi bi-x-circle me-1"></i> Cancel
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr *ngIf="subscribedPoliciesList.length === 0">
-                                    <td colspan="7" class="text-center py-5 text-muted">
+                                    <td [attr.colspan]="isPolicyAdminOrAdmin() ? 8 : 7" class="text-center py-5 text-muted">
                                         No policyholder records found.
                                     </td>
                                 </tr>

@@ -31,16 +31,14 @@ export class PolicyService {
     return this.http.post(`${this.apiUrl}/create`, policy);
   }
 
-  updatePolicy(id: number, policy: Policy): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, policy);
-  }
 
-  deletePolicy(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
-  }
 
   activatePolicy(id: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${id}/activate`, {});
+  }
+
+  updatePolicy(id: number, policy: Policy): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, policy);
   }
 
   cancelPolicy(id: number): Observable<any> {
