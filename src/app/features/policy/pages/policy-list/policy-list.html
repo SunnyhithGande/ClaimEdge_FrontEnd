@@ -301,7 +301,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <button class="btn btn-success font-weight-bold" *ngIf="isPolicyAdminOrAdmin()" (click)="showCreateModal = true">
+                <button class="btn btn-success font-weight-bold" *ngIf="isPolicyAdminOrAdmin()" routerLink="/policies/create">
                     <i class="bi bi-plus-lg me-1"></i> Create New Policy
                 </button>
             </div>
@@ -472,44 +472,5 @@
         </div>
     </ng-container>
 
-    <!-- CREATE POLICY MODAL (Policy Administrator) -->
-    <div *ngIf="showCreateModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title font-weight-bold">Create New Policy</h5>
-                    <button type="button" class="btn-close btn-close-white" (click)="showCreateModal = false"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">Product Type</label>
-                        <select class="form-select" [(ngModel)]="newPolicy.productType">
-                            <option *ngFor="let pt of productTypes" [value]="pt">{{ pt }}</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">Coverage Amount (₹)</label>
-                        <input type="number" class="form-control" [(ngModel)]="newPolicy.coverageAmount">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">Annual Premium (₹)</label>
-                        <input type="number" class="form-control" [(ngModel)]="newPolicy.premium">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label font-weight-bold">Initial Policy Status</label>
-                        <select class="form-select" [(ngModel)]="newPolicy.status">
-                            <option *ngFor="let st of statusOptions" [value]="st">{{ st }}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" (click)="showCreateModal = false" [disabled]="creatingPolicyState">Cancel</button>
-                    <button type="button" class="btn btn-success font-weight-bold" (click)="createPolicy()" [disabled]="creatingPolicyState">
-                        <span *ngIf="creatingPolicyState"><i class="bi bi-arrow-repeat me-1"></i> Creating...</span>
-                        <span *ngIf="!creatingPolicyState">Create Policy</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- END OF POLICY-LIST COMPONENT -->
 </div>

@@ -180,9 +180,7 @@ export class AnalyticsDashboardComponent implements OnInit {
       },
       error: () => {
         this.submitting = false;
-        this.showReportModal = false;
-        this.showMessage(`✅ Analytics Report Generated Successfully!`);
-        this.loadUserReports();
+        this.showMessage(`❌ Failed to generate report. Please try again.`);
       }
     });
   }

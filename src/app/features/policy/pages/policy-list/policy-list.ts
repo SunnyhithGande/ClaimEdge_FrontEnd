@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PolicyService } from '../../services/policy.service';
 import { Policy } from '../../models/policy.model';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -23,7 +23,7 @@ export interface AvailablePolicyPlan {
 @Component({
   selector: 'app-policy-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './policy-list.html',
   styleUrls: ['./policy-list.css']
 })
@@ -37,11 +37,8 @@ export class PolicyListComponent implements OnInit {
 
   policies: Policy[] = [];
   message: string = '';
-  showCreateModal = false;
   showProposalModal = false;
-
   submittingProposal = false;
-  creatingPolicyState = false;
 
   selectedPlanForProposal: AvailablePolicyPlan | null = null;
 
@@ -119,16 +116,6 @@ export class PolicyListComponent implements OnInit {
 
   originalAvailablePlans: AvailablePolicyPlan[] = [];
 
-  newPolicy: Policy = {
-    policyHolderId: 1,
-    productType: 'Motor Insurance',
-    coverageAmount: 500000,
-    premium: 12000,
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-    status: 'Draft'
-  };
-
   productTypes = [
     'Motor Insurance',
     'Health Insurance',
@@ -150,6 +137,11 @@ export class PolicyListComponent implements OnInit {
       this.activeTab = 'POLICY_ADMIN';
     } else {
       this.activeTab = 'POLICY_HOLDERS';
+    }
+
+    // Read success message from router state if coming from Create Policy
+    if (history.state?.message) {
+      this.showMessage(history.state.message);
     }
 
     this.loadPolicies();
@@ -346,8 +338,7 @@ export class PolicyListComponent implements OnInit {
       },
       error: () => {
         this.submittingProposal = false;
-        this.showMessage(`🎉 Policy Proposal (${plan.title}) Submitted Successfully! Status set to Pending Underwriting.`);
-        this.loadPolicies();
+        this.showMessage(`❌ Failed to submit proposal. Please try again.`);
       }
     });
   }
@@ -359,43 +350,6 @@ export class PolicyListComponent implements OnInit {
   sendDualNotification(policyHolderId: number, message: string): void {
     this.notificationService.createNotification(policyHolderId || 1, message, 'Policy').subscribe({ error: () => {} });
     this.notificationService.createNotification(106, message, 'Policy').subscribe({ error: () => {} });
-  }
-
-  createPolicy(): void {
-    if (this.creatingPolicyState) return;
-
-    if (!this.isPolicyAdminOrAdmin()) {
-      alert('Access Denied: Only Policy Administrator can create policies.');
-      return;
-    }
-
-    this.creatingPolicyState = true;
-    const statusVal = this.newPolicy.status || 'Draft';
-    const currentUserId = this.authService.getCurrentUserId();
-
-    const policyObj: Policy = {
-      ...this.newPolicy,
-      policyHolderId: currentUserId, // Master policy belongs to the Admin
-      status: statusVal
-    };
-
-    this.policyService.createPolicy(policyObj).subscribe({
-      next: (created) => {
-        this.creatingPolicyState = false;
-        const newId = created?.policyId || 1;
-        const notifMsg = `Policy Administrator created Policy #${newId} (${policyObj.productType}) for Policyholder #${policyObj.policyHolderId} with status: ${statusVal}.`;
-        this.sendDualNotification(policyObj.policyHolderId || currentUserId, notifMsg);
-        this.showMessage(`✅ Policy #${newId} Created Successfully! Notifications sent.`);
-        this.showCreateModal = false;
-        this.loadPolicies();
-      },
-      error: () => {
-        this.creatingPolicyState = false;
-        this.showMessage(`✅ Policy Created Successfully!`);
-        this.showCreateModal = false;
-        this.loadPolicies();
-      }
-    });
   }
 
   activatePolicy(id: number): void {
@@ -410,8 +364,7 @@ export class PolicyListComponent implements OnInit {
         this.loadPolicies();
       },
       error: () => {
-        this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
-        this.loadPolicies();
+        this.showMessage(`❌ Failed to activate policy. Please try again.`);
       }
     });
   }
@@ -428,8 +381,7 @@ export class PolicyListComponent implements OnInit {
         this.loadPolicies();
       },
       error: () => {
-        this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
-        this.loadPolicies();
+        this.showMessage(`❌ Failed to cancel policy. Please try again.`);
       }
     });
   }
@@ -444,8 +396,7 @@ export class PolicyListComponent implements OnInit {
         this.loadPolicies();
       },
       error: () => {
-        this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
-        this.loadPolicies();
+        this.showMessage(`❌ Failed to renew policy. Please try again.`);
       }
     });
   }

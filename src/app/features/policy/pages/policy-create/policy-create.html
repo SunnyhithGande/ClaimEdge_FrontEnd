@@ -1,8 +1,8 @@
 <div class="container-fluid py-4">
     <div class="page-header d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1">Create Insurance Policy</h2>
-            <p class="text-muted mb-0">Issue a new policy product for an active policyholder.</p>
+            <h2 class="mb-1">Create Master Policy</h2>
+            <p class="text-muted mb-0">Create a new Master Policy template for the insurance suite.</p>
         </div>
         <a routerLink="/policies" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Policies
@@ -11,52 +11,41 @@
 
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-header bg-white border-bottom p-4">
-            <h5 class="mb-0 font-weight-bold text-dark">Policy Details</h5>
+            <h5 class="mb-0 font-weight-bold text-dark">Master Policy Details</h5>
         </div>
         <div class="card-body p-4">
-            <form (ngSubmit)="createPolicy()">
+            <form>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label font-weight-bold">Policyholder User ID</label>
-                        <input type="number" class="form-control" [(ngModel)]="policy.policyHolderId" name="policyHolderId" required>
-                    </div>
-
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label font-weight-bold">Product Type</label>
-                        <select class="form-select" [(ngModel)]="policy.productType" name="productType" required>
-                            <option value="MOTOR">Motor Insurance</option>
-                            <option value="HEALTH">Health Insurance</option>
-                            <option value="LIFE">Life Insurance</option>
-                            <option value="PROPERTY">Property Insurance</option>
+                        <select class="form-select" [(ngModel)]="policy.productType" name="productType">
+                            <option *ngFor="let pt of productTypes" [value]="pt">{{ pt }}</option>
                         </select>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-bold">Initial Policy Status</label>
+                        <select class="form-select" [(ngModel)]="policy.status" name="status">
+                            <option *ngFor="let st of statusOptions" [value]="st">{{ st }}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
                         <label class="form-label font-weight-bold">Coverage Amount (₹)</label>
-                        <input type="number" class="form-control" [(ngModel)]="policy.coverageAmount" name="coverageAmount" required>
+                        <input type="number" class="form-control" [(ngModel)]="policy.coverageAmount" name="coverageAmount">
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label font-weight-bold">Annual Premium (₹)</label>
-                        <input type="number" class="form-control" [(ngModel)]="policy.premium" name="premium" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label font-weight-bold">Start Date</label>
-                        <input type="date" class="form-control" [(ngModel)]="policy.startDate" name="startDate" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label font-weight-bold">End Date</label>
-                        <input type="date" class="form-control" [(ngModel)]="policy.endDate" name="endDate" required>
+                        <input type="number" class="form-control" [(ngModel)]="policy.premium" name="premium">
                     </div>
                 </div>
 
                 <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
-                    <a routerLink="/policies" class="btn btn-light px-4">Cancel</a>
-                    <button type="submit" class="btn btn-primary px-4" [disabled]="submitting">
-                        <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-                        Issue Policy
+                    <a routerLink="/policies" class="btn btn-light px-4" [class.disabled]="submitting">Cancel</a>
+                    <button type="button" class="btn btn-success px-4 font-weight-bold" (click)="createPolicy()" [disabled]="submitting">
+                        <span *ngIf="submitting"><i class="spinner-border spinner-border-sm me-2"></i> Creating...</span>
+                        <span *ngIf="!submitting">Create Policy</span>
                     </button>
                 </div>
             </form>
