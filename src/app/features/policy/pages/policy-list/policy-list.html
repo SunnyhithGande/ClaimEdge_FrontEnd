@@ -335,7 +335,13 @@
                     <h5 class="mb-0 font-weight-bold text-dark">
                         <i class="bi bi-shield-lock-fill text-primary me-2"></i> Master Policy Administration Table
                     </h5>
-                    <span class="badge bg-primary px-3 py-2 fs-7">{{ adminMasterPolicies.length }} Master Policies</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0 shadow-none" [(ngModel)]="adminSearchTerm" (ngModelChange)="adminCurrentPage = 1" placeholder="Search by ID or Product...">
+                        </div>
+                        <span class="badge bg-primary px-3 py-2 fs-7 text-nowrap">{{ filteredAdminPolicies.length }} Policies</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -352,8 +358,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let p of adminMasterPolicies">
-                                    <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
+                                <tr *ngFor="let p of paginatedAdminPolicies">
+                                    <td><strong class="text-primary">#{{ p.displayId || p.policyId }}</strong></td>
                                     <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
                                     <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
                                     <td><span class="text-success fw-bold">₹{{ p.premium | number }}</span></td>
@@ -373,8 +379,8 @@
                                     </td>
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-success" *ngIf="p.status === 'Draft' || p.status === 'DRAFT'" (click)="activateMasterPolicy(p.policyId!)" title="Activate Policy">Activate</button>
-                                            <button class="btn btn-outline-danger" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="cancelMasterPolicy(p.policyId!)" title="Cancel Policy">Cancel</button>
+                                            <button class="btn btn-outline-success" *ngIf="p.status === 'Draft' || p.status === 'DRAFT'" (click)="activateMasterPolicy(p)" title="Activate Policy">Activate</button>
+                                            <button class="btn btn-outline-danger" *ngIf="p.status === 'Active' || p.status === 'ACTIVE'" (click)="cancelMasterPolicy(p)" title="Cancel Policy">Cancel</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -387,6 +393,17 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Admin Pagination Controls -->
+                    <div class="d-flex justify-content-center gap-4 align-items-center p-3 border-top" *ngIf="adminTotalPages > 1">
+                        <button class="btn btn-sm btn-outline-secondary" [disabled]="adminCurrentPage === 1" (click)="adminCurrentPage = adminCurrentPage - 1">
+                            <i class="bi bi-chevron-left me-1"></i> Previous
+                        </button>
+                        <span class="text-muted fs-7">Page {{ adminCurrentPage }} of {{ adminTotalPages }}</span>
+                        <button class="btn btn-sm btn-outline-secondary" [disabled]="adminCurrentPage === adminTotalPages" (click)="adminCurrentPage = adminCurrentPage + 1">
+                            Next <i class="bi bi-chevron-right ms-1"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -398,7 +415,13 @@
                     <h5 class="mb-0 font-weight-bold text-dark">
                         <i class="bi bi-people-fill text-primary me-2"></i> Subscribed Policyholders Records
                     </h5>
-                    <span class="badge bg-primary px-3 py-2 fs-7">{{ subscribedPoliciesList.length }} Policyholders</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0 shadow-none" [(ngModel)]="holdersSearchTerm" (ngModelChange)="holdersCurrentPage = 1" placeholder="Search Holder ID or Product...">
+                        </div>
+                        <span class="badge bg-primary px-3 py-2 fs-7 text-nowrap">{{ filteredSubscribedPolicies.length }} Policyholders</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -416,8 +439,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let p of subscribedPoliciesList">
-                                    <td><strong class="text-primary">#{{ p.policyId }}</strong></td>
+                                <tr *ngFor="let p of paginatedSubscribedPolicies">
+                                    <td><strong class="text-primary">#{{ p.displayId || p.policyId }}</strong></td>
                                     <td><div class="fw-bold text-dark">{{ p.productType }}</div></td>
                                     <td><span class="badge bg-light text-dark border fw-bold">Holder #{{ p.policyHolderId }}</span></td>
                                     <td><strong class="text-dark">₹{{ p.coverageAmount | number }}</strong></td>
@@ -440,12 +463,6 @@
                                     </td>
                                     <td class="text-end pe-3" *ngIf="isPolicyAdminOrAdmin()">
                                         <div class="btn-group shadow-sm">
-                                            <button *ngIf="p.status !== 'Active' && p.status !== 'ACTIVE' && p.status !== 'Cancelled' && p.status !== 'CANCELLED' && p.status !== 'Lapsed' && p.status !== 'LAPSED'" 
-                                                    class="btn btn-sm btn-outline-success font-weight-bold" 
-                                                    (click)="activatePolicy(p.policyId!)" title="Activate Policy"
-                                                    [disabled]="p.status === 'Declined' || p.status === 'DECLINED' || p.status === 'Rejected' || p.status === 'REJECTED' || p.status?.includes('Pending Payment') || p.status?.includes('PENDING PAYMENT') || p.status?.includes('Pending Underwriting') || p.status?.includes('PENDING UNDERWRITING')">
-                                                <i class="bi bi-check-circle me-1"></i> Activate
-                                            </button>
                                             <button *ngIf="p.status === 'Cancelled' || p.status === 'CANCELLED' || p.status === 'Lapsed' || p.status === 'LAPSED'" 
                                                     class="btn btn-sm btn-outline-primary font-weight-bold" 
                                                     (click)="renewPolicy(p.policyId!)" title="Renew Policy">
@@ -466,6 +483,17 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Policy Holders Pagination Controls -->
+                    <div class="d-flex justify-content-center gap-4 align-items-center p-3 border-top" *ngIf="holdersTotalPages > 1">
+                        <button class="btn btn-sm btn-outline-secondary" [disabled]="holdersCurrentPage === 1" (click)="holdersCurrentPage = holdersCurrentPage - 1">
+                            <i class="bi bi-chevron-left me-1"></i> Previous
+                        </button>
+                        <span class="text-muted fs-7">Page {{ holdersCurrentPage }} of {{ holdersTotalPages }}</span>
+                        <button class="btn btn-sm btn-outline-secondary" [disabled]="holdersCurrentPage === holdersTotalPages" (click)="holdersCurrentPage = holdersCurrentPage + 1">
+                            Next <i class="bi bi-chevron-right ms-1"></i>
+                        </button>
                     </div>
                 </div>
             </div>

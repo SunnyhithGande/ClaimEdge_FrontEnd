@@ -10,4 +10,6 @@ export interface Policy {
   riskScore?: number;
   underwriterRemarks?: string;
   riskFactors?: { [key: string]: any };
+  displayId?: number;
+  isMasterPlan?: boolean;
 }

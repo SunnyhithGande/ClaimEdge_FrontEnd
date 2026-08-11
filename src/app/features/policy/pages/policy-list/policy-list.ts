@@ -165,27 +165,97 @@ export class PolicyListComponent implements OnInit {
   get adminMasterPolicies(): Policy[] {
     const adminId = this.authService.getCurrentUserId();
     
-    // 1. Inbuilt policies
-    const inbuiltPolicies: Policy[] = this.originalAvailablePlans.map((plan, index) => ({
-      policyId: -(index + 1), // Fake ID
-      policyHolderId: adminId,
-      productType: plan.productType,
-      coverageAmount: plan.coverageAmount,
-      premium: plan.premium,
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-      status: plan.status || 'Active'
-    }));
+    const inbuiltPolicies: Policy[] = this.originalAvailablePlans.map((plan, index) => {
+      const p: any = {
+        policyId: 101 + index, // IDs 101, 102, 103, 104
+        displayId: 101 + index,
+        policyHolderId: adminId,
+        productType: plan.productType,
+        coverageAmount: plan.coverageAmount,
+        premium: plan.premium,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+        status: plan.status || 'Active'
+      };
+      p.isMasterPlan = true;
+      return p;
+    });
 
     // 2. Admin created policies from DB
     const adminCreated = this.policies.filter(p => p.policyHolderId === adminId);
+    
+    const mappedAdminCreated = adminCreated.map((p) => {
+      const mapped = { ...p } as any;
+      mapped.displayId = p.policyId;
+      return mapped;
+    });
 
-    return [...inbuiltPolicies, ...adminCreated];
+    return [...inbuiltPolicies, ...mappedAdminCreated];
   }
+
+  // --- Search & Pagination Logic ---
+  adminSearchTerm = '';
+  holdersSearchTerm = '';
+
+  adminCurrentPage = 1;
+  adminPageSize = 5;
+
+  holdersCurrentPage = 1;
+  holdersPageSize = 5;
+
+  get filteredAdminPolicies(): Policy[] {
+    if (!this.adminSearchTerm) return this.adminMasterPolicies;
+    const term = this.adminSearchTerm.toLowerCase();
+    return this.adminMasterPolicies.filter((p: any) => 
+      String(p.displayId || p.policyId).includes(term) || (p.productType && p.productType.toLowerCase().includes(term))
+    );
+  }
+
+  get paginatedAdminPolicies(): Policy[] {
+    const start = (this.adminCurrentPage - 1) * this.adminPageSize;
+    return this.filteredAdminPolicies.slice(start, start + this.adminPageSize);
+  }
+
+  get adminTotalPages(): number {
+    return Math.ceil(this.filteredAdminPolicies.length / this.adminPageSize) || 1;
+  }
+
+  get filteredSubscribedPolicies(): Policy[] {
+    if (!this.holdersSearchTerm) return this.subscribedPoliciesList;
+    const term = this.holdersSearchTerm.toLowerCase();
+    return this.subscribedPoliciesList.filter(p => 
+      String(p.policyHolderId).includes(term) || (p.productType && p.productType.toLowerCase().includes(term))
+    );
+  }
+
+  get paginatedSubscribedPolicies(): Policy[] {
+    const start = (this.holdersCurrentPage - 1) * this.holdersPageSize;
+    return this.filteredSubscribedPolicies.slice(start, start + this.holdersPageSize);
+  }
+
+  get holdersTotalPages(): number {
+    return Math.ceil(this.filteredSubscribedPolicies.length / this.holdersPageSize) || 1;
+  }
+  // ------------------------
 
   get subscribedPoliciesList(): Policy[] {
     const adminId = this.authService.getCurrentUserId();
-    return this.policies.filter(p => p.policyHolderId !== adminId);
+    const masters = this.adminMasterPolicies;
+
+    return this.policies.filter(p => {
+      if (p.policyHolderId === adminId) return false;
+      const s = (p.status || '').toUpperCase();
+      // Only show policies that have completed the application process (Active, Cancelled, Lapsed)
+      return s === 'ACTIVE' || s === 'CANCELLED' || s === 'LAPSED';
+    }).map(p => {
+      const mapped = { ...p };
+      const matchingMasters = masters.filter(m => m.productType === p.productType);
+      if (matchingMasters.length > 0) {
+        const matchingMaster = matchingMasters[matchingMasters.length - 1];
+        mapped.displayId = matchingMaster.displayId || matchingMaster.policyId;
+      }
+      return mapped;
+    });
   }
 
   deduplicatePolicies(list: Policy[]): Policy[] {
@@ -326,13 +396,6 @@ export class PolicyListComponent implements OnInit {
           'Policy'
         ).subscribe({ error: () => {} });
 
-        // 2. Notify Underwriter
-        this.notificationService.createNotification(
-          8,
-          `New Application #${newId} (${plan.productType}) submitted by Policyholder #${currentUserId} for Underwriting Review.`,
-          'Policy'
-        ).subscribe({ error: () => {} });
-
         this.showMessage(`🎉 Policy Proposal (${plan.title}) Submitted Successfully! Status set to Pending Underwriting.`);
         this.loadPolicies();
       },
@@ -347,9 +410,8 @@ export class PolicyListComponent implements OnInit {
     this.router.navigate(['/payments/premium-payments'], { queryParams: { policyId: p.policyId } });
   }
 
-  sendDualNotification(policyHolderId: number, message: string): void {
+  sendNotification(policyHolderId: number, message: string): void {
     this.notificationService.createNotification(policyHolderId || 1, message, 'Policy').subscribe({ error: () => {} });
-    this.notificationService.createNotification(106, message, 'Policy').subscribe({ error: () => {} });
   }
 
   activatePolicy(id: number): void {
@@ -359,7 +421,7 @@ export class PolicyListComponent implements OnInit {
       next: () => {
         const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been ACTIVATED by Policy Administrator. Policyholder can now view active coverage.`;
-        this.sendDualNotification(holderId, notifMsg);
+        this.sendNotification(holderId, notifMsg);
         this.showMessage(`✅ Policy #${id} Activated Successfully! Status updated to Active.`);
         this.loadPolicies();
       },
@@ -376,7 +438,7 @@ export class PolicyListComponent implements OnInit {
       next: () => {
         const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been CANCELLED by Policy Administrator.`;
-        this.sendDualNotification(holderId, notifMsg);
+        this.sendNotification(holderId, notifMsg);
         this.showMessage(`🚫 Policy #${id} Cancelled by Policy Administrator.`);
         this.loadPolicies();
       },
@@ -391,7 +453,7 @@ export class PolicyListComponent implements OnInit {
       next: () => {
         const holderId = this.policies.find(p => p.policyId === id)?.policyHolderId || 1;
         const notifMsg = `Policy #${id} has been RENEWED by Policy Administrator for 1 Year.`;
-        this.sendDualNotification(holderId, notifMsg);
+        this.sendNotification(holderId, notifMsg);
         this.showMessage(`🔄 Policy #${id} Renewed for 1 Year! Notifications sent.`);
         this.loadPolicies();
       },
@@ -401,70 +463,67 @@ export class PolicyListComponent implements OnInit {
     });
   }
 
-  activateMasterPolicy(id: number): void {
+  activateMasterPolicy(p: any): void {
     if (!this.isPolicyAdminOrAdmin()) return;
     let targetProductType = '';
     
-    if (id < 0) {
-      const index = Math.abs(id) - 1;
+    if (p.isMasterPlan) {
+      const index = p.policyId - 1;
       this.originalAvailablePlans[index].status = 'Active';
       targetProductType = this.originalAvailablePlans[index].productType;
       this.showMessage(`✅ Master Policy Activated.`);
     } else {
-      const p = this.policies.find(pol => pol.policyId === id);
-      targetProductType = p ? p.productType : '';
-      this.policyService.activatePolicy(id).subscribe();
+      targetProductType = p.productType;
+      this.policyService.activatePolicy(p.policyId).subscribe();
       this.showMessage(`✅ Master Policy Activated.`);
     }
 
     if (targetProductType) {
       const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
       subscribed.forEach(subPolicy => {
-         this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
+         this.sendNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
       });
     }
     setTimeout(() => this.loadPolicies(), 1000);
   }
 
-  renewMasterPolicy(id: number): void {
+  renewMasterPolicy(p: any): void {
     if (!this.isPolicyAdminOrAdmin()) return;
     let targetProductType = '';
     
-    if (id < 0) {
-      const index = Math.abs(id) - 1;
+    if (p.isMasterPlan) {
+      const index = p.policyId - 1;
       this.originalAvailablePlans[index].status = 'Active';
       targetProductType = this.originalAvailablePlans[index].productType;
       this.showMessage(`🔄 Master Policy Renewed.`);
     } else {
-      const p = this.policies.find(pol => pol.policyId === id);
-      targetProductType = p ? p.productType : '';
-      this.policyService.renewPolicy(id).subscribe();
+      targetProductType = p.productType;
+      this.policyService.renewPolicy(p.policyId).subscribe();
       this.showMessage(`🔄 Master Policy Renewed.`);
     }
 
     if (targetProductType) {
       const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
       subscribed.forEach(subPolicy => {
-         this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Renewed by the Administrator.`);
+         this.sendNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Renewed by the Administrator.`);
       });
     }
     setTimeout(() => this.loadPolicies(), 1000);
   }
 
-  cancelMasterPolicy(id: number): void {
+  cancelMasterPolicy(p: any): void {
     if (!this.isPolicyAdminOrAdmin()) return;
     let targetProductType = '';
     
-    if (id < 0) {
-      const index = Math.abs(id) - 1;
+    if (p.isMasterPlan) {
+      const index = p.policyId - 1;
       this.originalAvailablePlans[index].status = 'Cancelled';
       targetProductType = this.originalAvailablePlans[index].productType;
       this.showMessage(`🚫 Master Policy (${targetProductType}) Cancelled. Cascading to all subscriptions...`);
     } else {
-      const p = this.policies.find(pol => pol.policyId === id);
-      targetProductType = p ? p.productType : '';
-      this.policyService.cancelPolicy(id).subscribe();
-      this.showMessage(`🚫 Master Policy #${id} Cancelled. Cascading to all subscriptions...`);
+      targetProductType = p.productType;
+      this.policyService.cancelPolicy(p.policyId).subscribe();
+      this.showMessage(`🚫 Master Policy #${p.displayId || p.policyId} Cancelled. Cascading to all subscriptions...`);
     }
 
     if (targetProductType) {
@@ -472,7 +531,7 @@ export class PolicyListComponent implements OnInit {
       subscribedToCancel.forEach(subPolicy => {
          this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
            next: () => {
-             this.sendDualNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was cancelled.`);
+             this.sendNotification(subPolicy.policyHolderId, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was cancelled.`);
            }
          });
       });

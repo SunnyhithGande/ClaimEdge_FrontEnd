@@ -39,7 +39,7 @@ export class Login {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(1)]],
-      /*role: ['POLICYHOLDER', Validators.required]*/
+      role: ['POLICYHOLDER', Validators.required]
     });
   }
  
@@ -65,6 +65,12 @@ export class Login {
           .getCurrentUserFromApi()
           .subscribe({
             next: (user) => {
+              if (user.role.toUpperCase() !== selectedRole.toUpperCase()) {
+                this.loading = false;
+                this.errorMessage = 'Selected role does not match your account.';
+                this.authService.logout();
+                return;
+              }
               this.loading = false;
               this.navigateByRole(
                 user.role

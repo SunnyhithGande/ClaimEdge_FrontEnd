@@ -39,7 +39,7 @@ export class PolicyEditComponent implements OnInit {
     this.policyService.getAllPolicies().subscribe({
       next: (policies) => {
         this.allPolicies = policies || [];
-        if (this.policyId < 0) {
+        if (this.policyId >= 101 && this.policyId <= 104) {
             this.policy = {
                 policyId: this.policyId,
                 policyHolderId: this.authService.getCurrentUserId(),
@@ -64,9 +64,8 @@ export class PolicyEditComponent implements OnInit {
     return this.allPolicies.filter(p => p.policyHolderId !== adminId);
   }
 
-  sendDualNotification(policyHolderId: number, message: string): void {
+  sendNotification(policyHolderId: number, message: string): void {
     this.notificationService.createNotification(policyHolderId || 1, message, 'Policy').subscribe({ error: () => {} });
-    this.notificationService.createNotification(106, message, 'Policy').subscribe({ error: () => {} });
   }
 
   showMessage(msg: string): void {
@@ -78,23 +77,23 @@ export class PolicyEditComponent implements OnInit {
     if (!this.policy) return;
     const targetProductType = this.policy.productType;
     
-    if (this.policy.policyId! > 0) {
+    if (this.policy.policyId! < 101 || this.policy.policyId! > 104) {
       this.policyService.activatePolicy(this.policy.policyId!).subscribe();
     }
     this.showMessage(`✅ Master Policy Activated.`);
     this.policy.status = 'Active';
 
     const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
-    subscribed.forEach(subPolicy => {
-       this.sendDualNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
-    });
+      subscribed.forEach(subPolicy => {
+         this.sendNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Activated by the Administrator.`);
+      });
   }
 
   cancelPolicy(): void {
     if (!this.policy) return;
     const targetProductType = this.policy.productType;
     
-    if (this.policy.policyId! > 0) {
+    if (this.policy.policyId! < 101 || this.policy.policyId! > 104) {
       this.policyService.cancelPolicy(this.policy.policyId!).subscribe();
     }
     this.showMessage(`🚫 Master Policy Cancelled. Cascading to subscriptions...`);
@@ -103,9 +102,9 @@ export class PolicyEditComponent implements OnInit {
     const subscribedToCancel = this.subscribedPoliciesList.filter(p => p.productType === targetProductType && p.status !== 'Cancelled' && p.status !== 'CANCELLED');
     subscribedToCancel.forEach(subPolicy => {
        this.policyService.cancelPolicy(subPolicy.policyId!).subscribe({
-         next: () => {
-           this.sendDualNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was cancelled.`);
-         }
+           next: () => {
+             this.sendNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) has been cancelled by the Administrator because the Master Policy was cancelled.`);
+           }
        });
     });
   }
@@ -114,16 +113,16 @@ export class PolicyEditComponent implements OnInit {
     if (!this.policy) return;
     const targetProductType = this.policy.productType;
     
-    if (this.policy.policyId! > 0) {
+    if (this.policy.policyId! < 101 || this.policy.policyId! > 104) {
       this.policyService.renewPolicy(this.policy.policyId!).subscribe();
     }
     this.showMessage(`🔄 Master Policy Renewed.`);
     this.policy.status = 'Active';
 
     const subscribed = this.subscribedPoliciesList.filter(p => p.productType === targetProductType);
-    subscribed.forEach(subPolicy => {
-       this.sendDualNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Renewed by the Administrator.`);
-    });
+      subscribed.forEach(subPolicy => {
+         this.sendNotification(subPolicy.policyHolderId!, `Your ${targetProductType} policy (ID: #${subPolicy.policyId}) Master Plan has been Renewed by the Administrator.`);
+      });
   }
 
   goBack(): void {

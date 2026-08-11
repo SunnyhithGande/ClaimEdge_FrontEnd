@@ -108,12 +108,12 @@ export class EndorsementsComponent implements OnInit {
     this.endorsementService.createEndorsement(payload).subscribe({
       next: () => {
         this.submitting = false;
-        this.showMessage(`✅ Policy Endorsement created for Policy #${payload.policy.policyId}`);
+        this.showMessage(`Policy Endorsement created for Policy #${payload.policy.policyId}`);
         this.loadEndorsements();
       },
       error: () => {
         this.submitting = false;
-        this.showMessage(`✅ Policy Endorsement created for Policy #${payload.policy.policyId}`);
+        this.showMessage(`Failed to create policy endorsement.`);
         this.loadEndorsements();
       }
     });
@@ -132,8 +132,7 @@ export class EndorsementsComponent implements OnInit {
         this.loadEndorsements();
       },
       error: () => {
-        this.showMessage(`Endorsement #${id} deleted permanently.`);
-        this.loadEndorsements();
+        this.showMessage(`Failed to delete endorsement #${id}.`);
       }
     });
   }

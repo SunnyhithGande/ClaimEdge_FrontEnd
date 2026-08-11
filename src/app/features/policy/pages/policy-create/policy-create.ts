@@ -22,7 +22,7 @@ export class PolicyCreateComponent implements OnInit {
   private router = inject(Router);
 
   policy: Policy = {
-    policyHolderId: 1, // Will be overridden on submit
+    policyHolderId: 1,
     productType: 'Motor Insurance',
     coverageAmount: 500000,
     premium: 12000,
@@ -57,9 +57,8 @@ export class PolicyCreateComponent implements OnInit {
     return role === 'POLICY_ADMIN' || role === 'ADMIN';
   }
 
-  sendDualNotification(policyHolderId: number, message: string): void {
+  sendNotification(policyHolderId: number, message: string): void {
     this.notificationService.createNotification(policyHolderId || 1, message, 'Policy').subscribe({ error: () => {} });
-    this.notificationService.createNotification(106, message, 'Policy').subscribe({ error: () => {} });
   }
 
   createPolicy(): void {
@@ -90,7 +89,7 @@ export class PolicyCreateComponent implements OnInit {
         this.submitting = false;
         const newId = created?.policyId || 1;
         const notifMsg = `Policy Administrator created Policy #${newId} (${policyObj.productType}) for Policyholder #${policyObj.policyHolderId} with status: ${statusVal}.`;
-        this.sendDualNotification(policyObj.policyHolderId || currentUserId, notifMsg);
+        this.sendNotification(policyObj.policyHolderId || currentUserId, notifMsg);
         
         // Pass success message to the policy list page via router state
         this.router.navigate(['/policies'], { state: { message: `✅ Policy #${newId} Created Successfully! Notifications sent.` } });
